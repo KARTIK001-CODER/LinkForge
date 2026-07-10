@@ -1,0 +1,20 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model SmartLink {
+  id             String   @id @default(uuid())
+  destinationUrl String   @db.VarChar(2048)
+  alias          String   @unique @db.VarChar(50)
+  passwordHash   String?  @db.VarChar(255)
+  expiresAt      DateTime?
+  status         String   @default("ACTIVE") @db.VarChar(20)
+  tags           Json?    @default("[]")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
