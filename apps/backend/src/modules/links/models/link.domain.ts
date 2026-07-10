@@ -6,6 +6,7 @@ export interface SmartLink {
   expiresAt: Date | null;
   status: 'ACTIVE' | 'EXPIRED' | 'DISABLED';
   tags: any;
+  clicks: number;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -4,7 +4,7 @@ import { SmartLink, AliasConflictError } from '../models/link.domain';
 const prisma = new PrismaClient();
 
 export class LinkRepository {
-  async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status'> & { status?: string }): Promise<SmartLink> {
+  async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'clicks'> & { status?: string }): Promise<SmartLink> {
     try {
       const link = await prisma.smartLink.create({
         data: {
