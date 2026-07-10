@@ -27,7 +27,7 @@ export const createLink = async (req: Request, res: Response) => {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, errors: error.errors });
+      res.status(400).json({ success: false, errors: (error as any).errors });
       return;
     }
     if (error instanceof AliasConflictError) {
