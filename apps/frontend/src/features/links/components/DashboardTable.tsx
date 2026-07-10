@@ -1,4 +1,5 @@
 import { format } from 'date-fns';
+import { Link } from 'react-router-dom';
 import { Lock, Link2, ExternalLink, MoreVertical } from 'lucide-react';
 import type { LinkItem } from '../api/useGetLinks';
 
@@ -78,12 +79,12 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
         </thead>
         <tbody className="bg-white divide-y divide-gray-200">
           {links.map((link) => (
-            <tr key={link.id} className="hover:bg-gray-50 transition">
+            <tr key={link.id} className="hover:bg-gray-50 transition group">
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center">
-                  <span className="font-medium text-gray-900">{link.alias}</span>
+                <Link to={`/links/${link.alias}`} className="flex items-center group-hover:text-blue-600 transition">
+                  <span className="font-medium text-gray-900 group-hover:text-blue-600">{link.alias}</span>
                   {link.hasPassword && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
-                </div>
+                </Link>
                 <div className="text-sm text-gray-500 block md:hidden truncate max-w-[150px] mt-1">
                   {link.destinationUrl}
                 </div>
