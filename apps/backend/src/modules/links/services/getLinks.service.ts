@@ -40,7 +40,7 @@ export class GetLinksService {
       return {
         id: item.id,
         alias: item.alias,
-        shortUrl: `https://lnk.fg/${item.alias}`, // In real app, read from env
+        shortUrl: `${process.env.BASE_URL || 'http://localhost:4000'}/${item.alias}`,
         destinationUrl: item.destinationUrl,
         hasPassword: !!item.passwordHash,
         expiresAt: item.expiresAt,

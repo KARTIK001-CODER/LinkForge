@@ -15,7 +15,7 @@ export const createLink = async (req: Request, res: Response) => {
       success: true,
       data: {
         id: link.id,
-        shortUrl: `https://lnk.fg/${link.alias}`,
+        shortUrl: `${process.env.BASE_URL || 'http://localhost:4000'}/${link.alias}`,
         alias: link.alias,
         destinationUrl: link.destinationUrl,
         hasPassword: !!link.passwordHash,

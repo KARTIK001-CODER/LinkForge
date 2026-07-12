@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 import { SmartLink, AliasConflictError } from '../models/link.domain';
 import { RedisCacheService } from '../../redirect/services/redis-cache.service';
-
-const prisma = new PrismaClient();
+import CircuitBreaker = require('opossum');
 
 export class LinkRepository {
   async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'clicks'> & { status?: string }): Promise<SmartLink> {
@@ -28,6 +27,21 @@ export class LinkRepository {
     }
   }
 
+  private static findUniqueBreaker = new CircuitBreaker(async (alias: string) => {
+    return prisma.smartLink.findUnique({ 
+      where: { alias },
+      include: {
+        rules: {
+          orderBy: { priority: 'asc' }
+        }
+      }
+    });
+  }, {
+    timeout: 10000, // 10000ms max for a DB query
+    errorThresholdPercentage: 50, // Trip if 50% fail
+    resetTimeout: 5000 // Wait 5s before trying again
+  });
+
   async findByAlias(alias: string): Promise<SmartLink | null> {
     const cacheKey = RedisCacheService.formatLinkKey(alias);
     
@@ -37,15 +51,17 @@ export class LinkRepository {
       return { ...cachedLink, createdAt: new Date(cachedLink.createdAt), updatedAt: new Date(cachedLink.updatedAt) };
     }
 
-    // 2. Cache Miss -> Query DB
-    const dbLink = await prisma.smartLink.findUnique({ 
-      where: { alias },
-      include: {
-        rules: {
-          orderBy: { priority: 'asc' }
-        }
-      }
-    }) as SmartLink | null;
+    // 2. Cache Miss -> Query DB via Circuit Breaker
+    let dbLink: SmartLink | null = null;
+    try {
+      dbLink = await LinkRepository.findUniqueBreaker.fire(alias) as SmartLink | null;
+    } catch (e: any) {
+      console.error(`[CircuitBreaker] Failed to fetch alias ${alias} from DB: ${e.message}`);
+      // Re-throw so the redirect controller can catch it and return 503 instead of 500
+      const error = new Error('Database temporarily unavailable');
+      error.name = 'ServiceUnavailableError';
+      throw error;
+    }
 
     // 3. Populate Cache
     if (dbLink) {

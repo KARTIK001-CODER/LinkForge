@@ -1,4 +1,5 @@
 import Redis from 'ioredis';
+import { MetricsService } from './metrics.service';
 
 export class RedisCacheService {
   private static instance: Redis | null = null;
@@ -38,10 +39,15 @@ export class RedisCacheService {
 
     try {
       const data = await client.get(key);
-      if (!data) return null;
+      if (!data) {
+        MetricsService.cacheMisses.inc({ cache_type: 'redis' });
+        return null;
+      }
+      MetricsService.cacheHits.inc({ cache_type: 'redis' });
       return JSON.parse(data) as T;
     } catch (e) {
       console.warn(`[RedisCache] Failed to get key ${key}`);
+      MetricsService.cacheMisses.inc({ cache_type: 'redis' });
       return null;
     }
   }
