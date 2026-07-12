@@ -3,7 +3,9 @@ export interface SmartLink {
   destinationUrl: string;
   alias: string;
   passwordHash: string | null;
+  startsAt: Date | null;
   expiresAt: Date | null;
+  fallbackUrl: string | null;
   status: 'ACTIVE' | 'EXPIRED' | 'DISABLED' | 'ARCHIVED' | 'DELETED';
   title?: string | null;
   description?: string | null;

@@ -28,10 +28,16 @@ export class RedirectController {
 
         case RedirectStatus.INACTIVE:
           console.log(`[Redirect] Alias: ${shortCode}, Result: INACTIVE, Latency: ${Date.now() - startTime}ms`);
+          if (result.fallbackUrl) {
+            return res.redirect(302, result.fallbackUrl);
+          }
           return res.redirect(302, `${frontendUrl}/error/inactive`);
 
         case RedirectStatus.EXPIRED:
           console.log(`[Redirect] Alias: ${shortCode}, Result: EXPIRED, Latency: ${Date.now() - startTime}ms`);
+          if (result.fallbackUrl) {
+            return res.redirect(302, result.fallbackUrl);
+          }
           return res.redirect(302, `${frontendUrl}/error/expired`);
           
         case RedirectStatus.PASSWORD_REQUIRED:
