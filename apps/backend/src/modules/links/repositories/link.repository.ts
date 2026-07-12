@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { SmartLink, AliasConflictError } from '../models/link.domain';
+import { RedisCacheService } from '../../redirect/services/redis-cache.service';
 
 const prisma = new PrismaClient();
 
@@ -28,14 +29,31 @@ export class LinkRepository {
   }
 
   async findByAlias(alias: string): Promise<SmartLink | null> {
-    return prisma.smartLink.findUnique({ 
+    const cacheKey = RedisCacheService.formatLinkKey(alias);
+    
+    // 1. Check Cache
+    const cachedLink = await RedisCacheService.get<SmartLink>(cacheKey);
+    if (cachedLink) {
+      return { ...cachedLink, createdAt: new Date(cachedLink.createdAt), updatedAt: new Date(cachedLink.updatedAt) };
+    }
+
+    // 2. Cache Miss -> Query DB
+    const dbLink = await prisma.smartLink.findUnique({ 
       where: { alias },
       include: {
         rules: {
           orderBy: { priority: 'asc' }
         }
       }
-    }) as Promise<SmartLink | null>;
+    }) as SmartLink | null;
+
+    // 3. Populate Cache
+    if (dbLink) {
+      // Async fire-and-forget
+      Promise.resolve().then(() => RedisCacheService.set(cacheKey, dbLink));
+    }
+
+    return dbLink;
   }
 
   async findManyPaginated(params: {
@@ -115,8 +133,15 @@ export class LinkRepository {
         fallbackUrl: data.fallbackUrl,
         isFavorite: data.isFavorite,
         collectionId: data.collectionId,
+        trafficVariants: data.trafficVariants !== undefined ? (data.trafficVariants as any) : undefined,
       },
     });
+    
+    // Purge cache
+    if (updated.alias) {
+      Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(updated.alias)));
+    }
+    
     return updated as SmartLink;
   }
 
@@ -129,6 +154,10 @@ export class LinkRepository {
         alias: deletedAlias,
       },
     });
+    
+    // Purge cache for original alias
+    Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(originalAlias)));
+    
     return updated as SmartLink;
   }
 }
