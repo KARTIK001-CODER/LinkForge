@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { Lock, Link2, ExternalLink, MoreVertical, Edit2 } from 'lucide-react';
+import { Lock, Link2, ExternalLink, Archive, RefreshCw, Edit2 } from 'lucide-react';
 import type { LinkItem } from '../api/useGetLinks';
 import { EditLinkModal } from './EditLinkModal';
+import { ConfirmModal } from '../../../components/ConfirmModal';
+import { useArchiveLink } from '../api/useArchiveLink';
+import { useRestoreLink } from '../api/useRestoreLink';
 
 interface DashboardTableProps {
   links: LinkItem[];
@@ -15,7 +18,24 @@ interface DashboardTableProps {
 
 export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChange }: DashboardTableProps) {
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
-  
+  const [archivingLink, setArchivingLink] = useState<LinkItem | null>(null);
+  const [restoringLink, setRestoringLink] = useState<LinkItem | null>(null);
+
+  const archiveMutation = useArchiveLink(archivingLink?.id || '');
+  const restoreMutation = useRestoreLink(restoringLink?.id || '');
+
+  const handleArchive = () => {
+    archiveMutation.mutate(undefined, {
+      onSuccess: () => setArchivingLink(null),
+    });
+  };
+
+  const handleRestore = () => {
+    restoreMutation.mutate(undefined, {
+      onSuccess: () => setRestoringLink(null),
+    });
+  };
+
   const SortIcon = ({ column }: { column: string }) => {
     if (sortBy !== column) return <span className="text-gray-300 ml-1">↕</span>;
     return <span className="text-blue-500 ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
@@ -83,10 +103,10 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {links.map((link) => (
-              <tr key={link.id} className="hover:bg-gray-50 transition group">
+              <tr key={link.id} className={`hover:bg-gray-50 transition group ${link.status === 'ARCHIVED' ? 'opacity-75 bg-gray-50' : ''}`}>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <Link to={`/links/${link.alias}`} className="flex items-center group-hover:text-blue-600 transition">
-                    <span className="font-medium text-gray-900 group-hover:text-blue-600">{link.alias}</span>
+                    <span className={`font-medium text-gray-900 group-hover:text-blue-600 ${link.status === 'ARCHIVED' ? 'line-through text-gray-500' : ''}`}>{link.alias}</span>
                     {link.hasPassword && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                   </Link>
                   <div className="text-sm text-gray-500 block md:hidden truncate max-w-[150px] mt-1">
@@ -123,6 +143,7 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     link.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
                     link.status === 'EXPIRED' ? 'bg-red-100 text-red-800' : 
+                    link.status === 'ARCHIVED' ? 'bg-gray-200 text-gray-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
                     {link.status.charAt(0) + link.status.slice(1).toLowerCase()}
@@ -132,16 +153,32 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                   {format(new Date(link.createdAt), 'MMM d, yyyy')}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <button 
-                    onClick={() => setEditingLink(link)}
-                    className="text-gray-400 hover:text-blue-600 mr-2 transition-colors"
-                    title="Edit Link"
-                  >
-                    <Edit2 className="w-4 h-4 inline" />
-                  </button>
-                  <button className="text-gray-400 hover:text-gray-600">
-                    <MoreVertical className="w-5 h-5 inline" />
-                  </button>
+                  {link.status !== 'ARCHIVED' ? (
+                    <>
+                      <button 
+                        onClick={() => setEditingLink(link)}
+                        className="text-gray-400 hover:text-blue-600 mr-2 transition-colors"
+                        title="Edit Link"
+                      >
+                        <Edit2 className="w-4 h-4 inline" />
+                      </button>
+                      <button 
+                        onClick={() => setArchivingLink(link)}
+                        className="text-gray-400 hover:text-orange-600 transition-colors"
+                        title="Archive Link"
+                      >
+                        <Archive className="w-4 h-4 inline" />
+                      </button>
+                    </>
+                  ) : (
+                    <button 
+                      onClick={() => setRestoringLink(link)}
+                      className="text-gray-400 hover:text-green-600 transition-colors"
+                      title="Restore Link"
+                    >
+                      <RefreshCw className="w-4 h-4 inline" />
+                    </button>
+                  )}
                 </td>
               </tr>
             ))}
@@ -156,6 +193,26 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
           link={editingLink} 
         />
       )}
+
+      <ConfirmModal
+        isOpen={!!archivingLink}
+        onClose={() => setArchivingLink(null)}
+        onConfirm={handleArchive}
+        title="Archive Link"
+        message={`Are you sure you want to archive /${archivingLink?.alias}? It will be hidden from the main dashboard but will continue to route traffic.`}
+        confirmText="Archive"
+        isLoading={archiveMutation.isPending}
+      />
+
+      <ConfirmModal
+        isOpen={!!restoringLink}
+        onClose={() => setRestoringLink(null)}
+        onConfirm={handleRestore}
+        title="Restore Link"
+        message={`Are you sure you want to restore /${restoringLink?.alias}? It will reappear on your main dashboard.`}
+        confirmText="Restore"
+        isLoading={restoreMutation.isPending}
+      />
     </>
   );
 }

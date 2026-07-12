@@ -50,6 +50,10 @@ export class LinkRepository {
 
     if (status) {
       where.status = status;
+    } else {
+      where.status = {
+        notIn: ['ARCHIVED', 'DELETED']
+      };
     }
 
     if (tags && tags.length > 0) {
