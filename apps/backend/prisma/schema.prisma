@@ -24,6 +24,7 @@ model SmartLink {
   updatedAt      DateTime @updatedAt
   isFavorite     Boolean  @default(false)
   collectionId   String?
+  trafficVariants Json?   @default("[]")
   collection     Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   rules          RedirectRule[]
 }

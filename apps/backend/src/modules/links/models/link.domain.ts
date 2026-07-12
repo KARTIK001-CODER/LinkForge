@@ -12,10 +12,15 @@ export interface SmartLink {
   tags: any;
   clicks: number;
   createdAt: Date;
-  updatedAt: Date;
   isFavorite: boolean;
   collectionId?: string | null;
   rules?: RedirectRule[];
+  trafficVariants?: TrafficVariant[] | null;
+}
+
+export interface TrafficVariant {
+  url: string;
+  weight: number;
 }
 
 export interface RedirectRule {

@@ -7,6 +7,10 @@ export const editLinkSchema = z.object({
   isActive: z.boolean().optional(),
   tags: z.array(z.string().max(20)).max(10).optional(),
   collectionId: z.string().uuid().optional().nullable(),
+  trafficVariants: z.array(z.object({
+    url: z.string().url().max(2048),
+    weight: z.number().int().min(1).max(99)
+  })).optional().nullable(),
 }).refine(data => Object.keys(data).length > 0, {
   message: "At least one field must be provided for update",
 });
