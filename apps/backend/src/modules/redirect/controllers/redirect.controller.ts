@@ -8,9 +8,10 @@ export class RedirectController {
   static async handleRedirect(req: Request, res: Response) {
     try {
       const shortCode = req.params.shortCode as string;
+      const token = req.query.token as string | undefined;
       const startTime = Date.now();
 
-      const result = await redirectService.resolveAlias(shortCode);
+      const result = await redirectService.resolveAlias(shortCode, token);
 
       // Construct frontend base URL safely
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
@@ -34,10 +35,9 @@ export class RedirectController {
           return res.redirect(302, `${frontendUrl}/error/expired`);
           
         case RedirectStatus.PASSWORD_REQUIRED:
-          // For Epic 2, Story 2.2
+          // Epic 2, Story 2.2 - Password protection redirect
           console.log(`[Redirect] Alias: ${shortCode}, Result: PASSWORD_REQUIRED, Latency: ${Date.now() - startTime}ms`);
-          // Temporarily redirect to not found until password page exists
-          return res.redirect(302, `${frontendUrl}/error/not-found`);
+          return res.redirect(302, `${frontendUrl}/protected/${shortCode}`);
 
         default:
           console.error(`[Redirect] Unknown status for alias: ${shortCode}`);
