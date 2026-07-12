@@ -72,4 +72,22 @@ export class LinkRepository {
 
     return { items: items as SmartLink[], totalItems };
   }
+
+  async findById(id: string): Promise<SmartLink | null> {
+    return prisma.smartLink.findUnique({ where: { id } }) as Promise<SmartLink | null>;
+  }
+
+  async update(id: string, data: Partial<Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'clicks' | 'alias'>>): Promise<SmartLink> {
+    const updated = await prisma.smartLink.update({
+      where: { id },
+      data: {
+        destinationUrl: data.destinationUrl,
+        title: data.title,
+        description: data.description,
+        status: data.status,
+        tags: data.tags,
+      },
+    });
+    return updated as SmartLink;
+  }
 }

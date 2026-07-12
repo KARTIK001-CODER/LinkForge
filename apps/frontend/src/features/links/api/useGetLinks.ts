@@ -15,6 +15,8 @@ export interface LinkItem {
   alias: string;
   shortUrl: string;
   destinationUrl: string;
+  title?: string | null;
+  description?: string | null;
   hasPassword: boolean;
   expiresAt: string | null;
   status: string;
