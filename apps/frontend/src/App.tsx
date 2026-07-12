@@ -10,6 +10,7 @@ import CollectionsPage from './pages/CollectionsPage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 import InactivePage from './pages/errors/InactivePage';
 import ExpiredPage from './pages/errors/ExpiredPage';
+import ProtectedPage from './pages/errors/ProtectedPage';
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ function App() {
           <Route path="/error/not-found" element={<NotFoundPage />} />
           <Route path="/error/inactive" element={<InactivePage />} />
           <Route path="/error/expired" element={<ExpiredPage />} />
+          <Route path="/protected/:alias" element={<ProtectedPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>

@@ -5,6 +5,7 @@ import { getLink } from './controllers/getLink.controller';
 import { editLink } from './controllers/editLink.controller';
 import { archiveLink, restoreLink, deleteLink } from './controllers/lifecycle.controller';
 import { favoriteLink, unfavoriteLink } from './controllers/favorite.controller';
+import { VerifyPasswordController } from './controllers/verifyPassword.controller';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.delete('/:id', deleteLink);
 
 router.patch('/:id/favorite', favoriteLink);
 router.patch('/:id/unfavorite', unfavoriteLink);
+router.post('/:alias/verify', VerifyPasswordController.verify);
 
 export default router;

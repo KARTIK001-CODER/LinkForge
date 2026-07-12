@@ -1,5 +1,6 @@
 import { LinkRepository } from '../../links/repositories/link.repository';
 import { RedirectResult, RedirectStatus } from '../models/redirect.domain';
+import jwt from 'jsonwebtoken';
 
 export class RedirectService {
   private linkRepository: LinkRepository;
@@ -8,7 +9,7 @@ export class RedirectService {
     this.linkRepository = new LinkRepository();
   }
 
-  async resolveAlias(alias: string): Promise<RedirectResult> {
+  async resolveAlias(alias: string, token?: string): Promise<RedirectResult> {
     const link = await this.linkRepository.findByAlias(alias);
 
     if (!link) {
@@ -23,9 +24,24 @@ export class RedirectService {
       return { status: RedirectStatus.EXPIRED };
     }
 
-    // TODO: Epic 2 Story 2.2 - Evaluate Password/Rules
+    // Epic 2 Story 2.2 - Evaluate Password/Rules
     if (link.passwordHash) {
-      return { status: RedirectStatus.PASSWORD_REQUIRED };
+      let isTokenValid = false;
+      if (token) {
+        try {
+          const secret = process.env.JWT_SECRET || 'fallback_secret_for_local_dev';
+          const decoded = jwt.verify(token, secret) as { alias: string };
+          if (decoded.alias === alias) {
+            isTokenValid = true;
+          }
+        } catch (e) {
+          // Token is invalid or expired
+        }
+      }
+      
+      if (!isTokenValid) {
+        return { status: RedirectStatus.PASSWORD_REQUIRED };
+      }
     }
 
     // Security check: ensure URL is safe to redirect to
