@@ -5,6 +5,8 @@ export interface SmartLink {
   passwordHash: string | null;
   expiresAt: Date | null;
   status: 'ACTIVE' | 'EXPIRED' | 'DISABLED';
+  title: string | null;
+  description: string | null;
   tags: any;
   clicks: number;
   createdAt: Date;
