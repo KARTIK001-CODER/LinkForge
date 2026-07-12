@@ -9,6 +9,7 @@ export const createLinkSchema = z.object({
     return new Date(val) > new Date();
   }, { message: "expiresAt must be in the future" }),
   tags: z.array(z.string().max(20)).max(10).optional(),
+  collectionId: z.string().uuid().optional().nullable(),
 });
 
 export type CreateLinkDto = z.infer<typeof createLinkSchema>;

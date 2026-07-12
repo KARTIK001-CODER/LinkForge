@@ -5,6 +5,8 @@ import CreateLinkPage from './pages/CreateLinkPage';
 import DashboardPage from './pages/DashboardPage';
 import LinkDetailsPage from './pages/LinkDetailsPage';
 
+import CollectionsPage from './pages/CollectionsPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -14,6 +16,7 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout />}>
             <Route index element={<DashboardPage />} />
+            <Route path="collections" element={<CollectionsPage />} />
             <Route path="create" element={<CreateLinkPage />} />
             <Route path="links/:alias" element={<LinkDetailsPage />} />
           </Route>

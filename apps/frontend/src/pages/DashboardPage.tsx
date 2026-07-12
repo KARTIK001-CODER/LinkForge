@@ -2,10 +2,15 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useGetLinks } from '../features/links/api/useGetLinks';
 import { DashboardTable } from '../features/links/components/DashboardTable';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, Folder, Settings, Trash, Edit2 } from 'lucide-react';
+import { useGetCollection } from '../features/collections/api/useGetCollection';
+import { useDeleteCollection } from '../features/collections/api/useDeleteCollection';
+import { CollectionModal } from '../features/collections/components/CollectionModal';
+import { useNavigate } from 'react-router-dom';
 
 export default function DashboardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   const page = parseInt(searchParams.get('page') || '1', 10);
   const limit = parseInt(searchParams.get('limit') || '20', 10);
@@ -16,8 +21,10 @@ export default function DashboardPage() {
   const sortOrder = searchParams.get('sortOrder') || 'desc';
 
   const isFavorite = searchParams.get('isFavorite') || '';
+  const collectionId = searchParams.get('collectionId') || '';
 
   const [searchInput, setSearchInput] = useState(search);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   const { data, isLoading, isError, error } = useGetLinks({
     page,
@@ -26,9 +33,13 @@ export default function DashboardPage() {
     status,
     tags,
     isFavorite,
+    collectionId,
     sortBy,
     sortOrder,
   });
+
+  const { data: collectionData } = useGetCollection(collectionId);
+  const deleteCollection = useDeleteCollection();
 
   // Debounce search input
   useEffect(() => {
@@ -60,12 +71,44 @@ export default function DashboardPage() {
     }
   };
 
+  const handleDeleteCollection = async () => {
+    if (confirm('Are you sure you want to delete this collection? Links will not be deleted.')) {
+      try {
+        await deleteCollection.mutateAsync(collectionId);
+        navigate('/');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const collection = collectionData?.data;
+
   return (
     <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Smart Links</h1>
-          <p className="text-gray-500 text-sm mt-1">Manage and track all your forged links.</p>
+          {collectionId && collection ? (
+            <div className="flex items-center gap-3">
+              <Folder className="w-8 h-8 text-gray-400" />
+              <h1 className="text-2xl font-bold text-gray-900">{collection.name}</h1>
+              <div className="flex gap-2 ml-4">
+                <button onClick={() => setIsEditModalOpen(true)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded-md hover:bg-gray-100">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={handleDeleteCollection} className="p-1.5 text-gray-400 hover:text-red-600 rounded-md hover:bg-gray-100">
+                  <Trash className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          ) : (
+            <h1 className="text-2xl font-bold text-gray-900">
+              {isFavorite === 'true' ? 'Favorite Links' : status === 'ARCHIVED' ? 'Archived Links' : 'All Links'}
+            </h1>
+          )}
+          <p className="text-gray-500 text-sm mt-1">
+            {collection?.description || 'Manage and track all your forged links.'}
+          </p>
         </div>
       </div>
 
@@ -177,6 +220,14 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {collection && (
+        <CollectionModal 
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          collection={collection}
+        />
       )}
     </div>
   );

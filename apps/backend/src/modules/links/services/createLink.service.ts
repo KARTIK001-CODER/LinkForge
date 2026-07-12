@@ -21,6 +21,7 @@ export class CreateLinkService {
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         tags: dto.tags || [],
         isFavorite: false,
+        collectionId: dto.collectionId,
       });
     }
 
@@ -38,6 +39,7 @@ export class CreateLinkService {
           expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
           tags: dto.tags || [],
           isFavorite: false,
+          collectionId: dto.collectionId,
         });
       } catch (error) {
         if (error instanceof AliasConflictError) {

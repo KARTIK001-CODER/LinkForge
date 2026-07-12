@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X, Loader2 } from 'lucide-react';
 import { useEditLink } from '../api/useEditLink';
+import { useGetCollections } from '../../collections/api/useGetCollections';
 import type { LinkItem } from '../api/useGetLinks';
 
 const editLinkSchema = z.object({
@@ -12,6 +13,7 @@ const editLinkSchema = z.object({
   description: z.string().max(500, "Description must be under 500 characters").optional(),
   isActive: z.boolean().optional(),
   tags: z.string().optional(), // We'll handle comma-separated tags
+  collectionId: z.string().uuid().optional().nullable().or(z.literal('')),
 });
 
 type EditLinkFormValues = z.infer<typeof editLinkSchema>;
@@ -24,6 +26,7 @@ interface EditLinkModalProps {
 
 export function EditLinkModal({ isOpen, onClose, link }: EditLinkModalProps) {
   const { mutate, isPending, isError, error, isSuccess } = useEditLink(link.id);
+  const { data: collectionsData } = useGetCollections();
 
   const {
     register,
@@ -39,6 +42,7 @@ export function EditLinkModal({ isOpen, onClose, link }: EditLinkModalProps) {
       description: link.description || '',
       isActive: link.status === 'ACTIVE',
       tags: link.tags ? link.tags.join(', ') : '',
+      collectionId: link.collectionId || '',
     },
   });
 
@@ -50,6 +54,7 @@ export function EditLinkModal({ isOpen, onClose, link }: EditLinkModalProps) {
       description: link.description || '',
       isActive: link.status === 'ACTIVE',
       tags: link.tags ? link.tags.join(', ') : '',
+      collectionId: link.collectionId || '',
     });
   }, [link, reset]);
 
@@ -62,6 +67,7 @@ export function EditLinkModal({ isOpen, onClose, link }: EditLinkModalProps) {
       description: data.description || null,
       isActive: data.isActive,
       tags: data.tags ? data.tags.split(',').map((t) => t.trim()).filter(Boolean) : [],
+      collectionId: data.collectionId || null,
     };
 
     mutate(payload, {
@@ -164,6 +170,21 @@ export function EditLinkModal({ isOpen, onClose, link }: EditLinkModalProps) {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
                 placeholder="e.g. marketing, summer-sale"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+              <select
+                {...register('collectionId')}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
+              >
+                <option value="">None / Uncategorized</option>
+                {collectionsData?.data?.map((collection) => (
+                  <option key={collection.id} value={collection.id}>
+                    {collection.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="flex items-center mt-2">

@@ -12,6 +12,7 @@ export interface SmartLink {
   createdAt: Date;
   updatedAt: Date;
   isFavorite: boolean;
+  collectionId?: string | null;
 }
 
 export class AliasConflictError extends Error {

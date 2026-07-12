@@ -13,6 +13,7 @@ export class LinkRepository {
           passwordHash: data.passwordHash,
           expiresAt: data.expiresAt,
           tags: data.tags ? data.tags : [],
+          collectionId: data.collectionId,
         },
       });
       return link as SmartLink;
@@ -35,10 +36,11 @@ export class LinkRepository {
     status?: string;
     tags?: string[];
     isFavorite?: boolean;
+    collectionId?: string;
     sortBy: 'createdAt' | 'alias';
     sortOrder: 'asc' | 'desc';
   }): Promise<{ items: SmartLink[]; totalItems: number }> {
-    const { skip, take, search, status, tags, isFavorite, sortBy, sortOrder } = params;
+    const { skip, take, search, status, tags, isFavorite, collectionId, sortBy, sortOrder } = params;
 
     const where: any = {};
 
@@ -65,6 +67,10 @@ export class LinkRepository {
 
     if (isFavorite !== undefined) {
       where.isFavorite = isFavorite;
+    }
+
+    if (collectionId !== undefined) {
+      where.collectionId = collectionId === 'unassigned' ? null : collectionId;
     }
 
     const [items, totalItems] = await prisma.$transaction([
@@ -96,6 +102,7 @@ export class LinkRepository {
         status: data.status,
         tags: data.tags,
         isFavorite: data.isFavorite,
+        collectionId: data.collectionId,
       },
     });
     return updated as SmartLink;
