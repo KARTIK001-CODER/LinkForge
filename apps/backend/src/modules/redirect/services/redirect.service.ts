@@ -17,11 +17,15 @@ export class RedirectService {
     }
 
     if (link.status === 'DISABLED' || link.status === 'ARCHIVED' || link.status === 'DELETED') {
-      return { status: RedirectStatus.INACTIVE };
+      return { status: RedirectStatus.INACTIVE, fallbackUrl: link.fallbackUrl || undefined };
+    }
+
+    if (link.startsAt && new Date(link.startsAt) > new Date()) {
+      return { status: RedirectStatus.INACTIVE, fallbackUrl: link.fallbackUrl || undefined };
     }
 
     if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
-      return { status: RedirectStatus.EXPIRED };
+      return { status: RedirectStatus.EXPIRED, fallbackUrl: link.fallbackUrl || undefined };
     }
 
     // Epic 2 Story 2.2 - Evaluate Password/Rules

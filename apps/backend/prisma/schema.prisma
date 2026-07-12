@@ -12,7 +12,9 @@ model SmartLink {
   destinationUrl String   @db.VarChar(2048)
   alias          String   @unique @db.VarChar(50)
   passwordHash   String?  @db.VarChar(255)
+  startsAt       DateTime?
   expiresAt      DateTime?
+  fallbackUrl    String?  @db.VarChar(2048)
   status         String   @default("ACTIVE") @db.VarChar(20)
   title          String?  @db.VarChar(100)
   description    String?  @db.VarChar(500)
