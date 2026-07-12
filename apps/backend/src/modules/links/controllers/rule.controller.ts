@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { RedisCacheService } from '../../redirect/services/redis-cache.service';
 
 const prisma = new PrismaClient();
 
@@ -30,6 +31,13 @@ export class RuleController {
           conditions
         }
       });
+
+      // Purge cache
+      const link = await prisma.smartLink.findUnique({ where: { id: linkId }});
+      if (link?.alias) {
+        Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(link.alias)));
+      }
+
       return res.status(201).json({ status: 'success', data: rule });
     } catch (e) {
       return res.status(500).json({ status: 'error', message: 'Failed to create rule' });
@@ -39,7 +47,16 @@ export class RuleController {
   static async deleteRule(req: Request, res: Response) {
     try {
       const { ruleId } = req.params;
+      
+      const rule = await prisma.redirectRule.findUnique({ where: { id: ruleId }, include: { link: true } });
+      
       await prisma.redirectRule.delete({ where: { id: ruleId } });
+      
+      // Purge cache
+      if (rule?.link?.alias) {
+        Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(rule.link.alias)));
+      }
+      
       return res.json({ status: 'success' });
     } catch (e) {
       return res.status(500).json({ status: 'error', message: 'Failed to delete rule' });
