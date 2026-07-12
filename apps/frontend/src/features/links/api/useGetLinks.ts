@@ -8,6 +8,7 @@ interface GetLinksParams {
   tags?: string;
   sortBy?: string;
   sortOrder?: string;
+  isFavorite?: string;
 }
 
 export interface LinkItem {
@@ -21,6 +22,7 @@ export interface LinkItem {
   expiresAt: string | null;
   status: string;
   tags: string[];
+  isFavorite: boolean;
   createdAt: string;
 }
 

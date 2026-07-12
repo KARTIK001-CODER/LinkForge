@@ -20,6 +20,7 @@ export class CreateLinkService {
         passwordHash,
         expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
         tags: dto.tags || [],
+        isFavorite: false,
       });
     }
 
@@ -36,6 +37,7 @@ export class CreateLinkService {
           passwordHash,
           expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
           tags: dto.tags || [],
+          isFavorite: false,
         });
       } catch (error) {
         if (error instanceof AliasConflictError) {
