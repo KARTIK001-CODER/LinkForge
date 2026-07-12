@@ -51,8 +51,14 @@ export class RedirectController {
           console.error(`[Redirect] Unknown status for alias: ${shortCode}`);
           return res.redirect(302, `${frontendUrl}/error/not-found`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('[Redirect Error]', error);
+      
+      if (error.name === 'ServiceUnavailableError') {
+        // Fast fail for circuit breaker trips
+        return res.status(503).send('Service Unavailable');
+      }
+
       // Fallback on severe error to 500 error page rather than leaking stack traces
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(302, `${frontendUrl}/error/500`);

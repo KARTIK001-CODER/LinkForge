@@ -1,8 +1,7 @@
 import { PrismaClient } from '@prisma/client';
 import { Collection } from '../models/collection.domain';
 import { CreateCollectionDto, UpdateCollectionDto } from '../validators/collection.schema';
-
-const prisma = new PrismaClient();
+import prisma from '../../../lib/prisma';
 
 export class CollectionRepository {
   async create(data: CreateCollectionDto): Promise<Collection> {

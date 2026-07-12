@@ -1,8 +1,6 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 import { RedisCacheService } from '../../redirect/services/redis-cache.service';
-
-const prisma = new PrismaClient();
 
 export class RuleController {
   static async getRules(req: Request, res: Response) {
