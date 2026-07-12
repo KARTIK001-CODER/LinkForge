@@ -51,9 +51,9 @@ export class RedirectController {
       }
     } catch (error) {
       console.error('[Redirect Error]', error);
-      // Fallback on severe error to generic not-found rather than leaking stack traces
+      // Fallback on severe error to 500 error page rather than leaking stack traces
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-      return res.redirect(302, `${frontendUrl}/error/not-found`);
+      return res.redirect(302, `${frontendUrl}/error/500`);
     }
   }
 }
