@@ -7,6 +7,10 @@ import LinkDetailsPage from './pages/LinkDetailsPage';
 
 import CollectionsPage from './pages/CollectionsPage';
 
+import NotFoundPage from './pages/errors/NotFoundPage';
+import InactivePage from './pages/errors/InactivePage';
+import ExpiredPage from './pages/errors/ExpiredPage';
+
 const queryClient = new QueryClient();
 
 function App() {
@@ -20,6 +24,10 @@ function App() {
             <Route path="create" element={<CreateLinkPage />} />
             <Route path="links/:alias" element={<LinkDetailsPage />} />
           </Route>
+          
+          <Route path="/error/not-found" element={<NotFoundPage />} />
+          <Route path="/error/inactive" element={<InactivePage />} />
+          <Route path="/error/expired" element={<ExpiredPage />} />
         </Routes>
       </BrowserRouter>
     </QueryClientProvider>
