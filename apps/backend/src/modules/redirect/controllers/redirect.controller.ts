@@ -9,9 +9,11 @@ export class RedirectController {
     try {
       const shortCode = req.params.shortCode as string;
       const token = req.query.token as string | undefined;
+      const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const userAgent = req.headers['user-agent'] || '';
       const startTime = Date.now();
 
-      const result = await redirectService.resolveAlias(shortCode, token);
+      const result = await redirectService.resolveAlias(shortCode, ip, userAgent, token);
 
       // Construct frontend base URL safely
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';

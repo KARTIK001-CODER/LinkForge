@@ -6,6 +6,7 @@ import { LinkQuickStats } from '../features/links/components/LinkQuickStats';
 import { QRCodeModal } from '../features/links/components/QRCodeModal';
 import { ArrowLeft, Copy, QrCode, ExternalLink, Link2, AlertTriangle } from 'lucide-react';
 import { FavoriteButton } from '../features/links/components/FavoriteButton';
+import { RulesManager } from '../features/links/components/RulesManager';
 
 export default function LinkDetailsPage() {
   const { alias } = useParams<{ alias: string }>();
@@ -126,6 +127,9 @@ export default function LinkDetailsPage() {
           <LinkQuickStats clicks={link.clicks} />
         </div>
       </div>
+      
+      {/* Smart Redirect Rules */}
+      <RulesManager linkId={link.id} />
 
       <QRCodeModal 
         isOpen={isQRModalOpen}

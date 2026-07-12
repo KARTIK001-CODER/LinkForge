@@ -28,7 +28,14 @@ export class LinkRepository {
   }
 
   async findByAlias(alias: string): Promise<SmartLink | null> {
-    return prisma.smartLink.findUnique({ where: { alias } }) as Promise<SmartLink | null>;
+    return prisma.smartLink.findUnique({ 
+      where: { alias },
+      include: {
+        rules: {
+          orderBy: { priority: 'asc' }
+        }
+      }
+    }) as Promise<SmartLink | null>;
   }
 
   async findManyPaginated(params: {
