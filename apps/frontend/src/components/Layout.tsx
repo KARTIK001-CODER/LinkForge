@@ -1,12 +1,13 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Link as LinkIcon, Home, Plus } from 'lucide-react';
+import { Sidebar } from './Sidebar';
 
 export default function Layout() {
   const location = useLocation();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-10">
+      <nav className="bg-white border-b border-gray-200 sticky top-0 z-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex">
@@ -30,6 +31,16 @@ export default function Layout() {
                   <Home className="w-4 h-4 mr-2" />
                   Dashboard
                 </Link>
+                <Link
+                  to="/collections"
+                  className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium transition ${
+                    location.pathname === '/collections' 
+                      ? 'border-blue-600 text-gray-900' 
+                      : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                  }`}
+                >
+                  Collections
+                </Link>
               </div>
             </div>
             <div className="flex items-center">
@@ -45,9 +56,12 @@ export default function Layout() {
         </div>
       </nav>
 
-      <main className="flex-1">
-        <Outlet />
-      </main>
+      <div className="flex-1 flex max-w-7xl w-full mx-auto">
+        <Sidebar />
+        <main className="flex-1 w-full p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

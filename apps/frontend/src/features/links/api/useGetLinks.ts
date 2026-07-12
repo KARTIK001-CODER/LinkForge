@@ -9,6 +9,7 @@ interface GetLinksParams {
   sortBy?: string;
   sortOrder?: string;
   isFavorite?: string;
+  collectionId?: string;
 }
 
 export interface LinkItem {
@@ -23,6 +24,7 @@ export interface LinkItem {
   status: string;
   tags: string[];
   isFavorite: boolean;
+  collectionId?: string | null;
   createdAt: string;
 }
 

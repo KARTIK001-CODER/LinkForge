@@ -9,7 +9,7 @@ export class GetLinksService {
   }
 
   async execute(query: GetLinksQuery) {
-    const { page, limit, search, status, tags, isFavorite, sortBy, sortOrder } = query;
+    const { page, limit, search, status, tags, isFavorite, collectionId, sortBy, sortOrder } = query;
     
     const skip = (page - 1) * limit;
     const take = limit;
@@ -23,6 +23,7 @@ export class GetLinksService {
       status,
       tags: parsedTags,
       isFavorite,
+      collectionId,
       sortBy,
       sortOrder,
     });
@@ -46,6 +47,7 @@ export class GetLinksService {
         status: currentStatus,
         tags: item.tags,
         isFavorite: item.isFavorite,
+        collectionId: item.collectionId,
         createdAt: item.createdAt,
       };
     });

@@ -6,6 +6,7 @@ export const editLinkSchema = z.object({
   description: z.string().max(500).optional().nullable(),
   isActive: z.boolean().optional(),
   tags: z.array(z.string().max(20)).max(10).optional(),
+  collectionId: z.string().uuid().optional().nullable(),
 }).refine(data => Object.keys(data).length > 0, {
   message: "At least one field must be provided for update",
 });

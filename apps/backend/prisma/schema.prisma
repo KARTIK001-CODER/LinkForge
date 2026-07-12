@@ -21,4 +21,16 @@ model SmartLink {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
   isFavorite     Boolean  @default(false)
+  collectionId   String?
+  collection     Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
+}
+
+model Collection {
+  id          String      @id @default(uuid())
+  name        String      @db.VarChar(100)
+  description String?     @db.VarChar(500)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  links       SmartLink[]
 }

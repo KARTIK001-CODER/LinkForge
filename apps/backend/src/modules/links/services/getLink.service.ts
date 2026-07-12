@@ -29,6 +29,7 @@ export class GetLinkService {
       status: currentStatus,
       tags: item.tags,
       isFavorite: item.isFavorite,
+      collectionId: item.collectionId,
       clicks: item.clicks,
       createdAt: item.createdAt,
       updatedAt: item.updatedAt,

@@ -4,12 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import type { CreateLinkFormData } from '../schemas/createLinkSchema';
 import { createLinkSchema } from '../schemas/createLinkSchema';
 import { useCreateLink } from '../api/useCreateLink';
+import { useGetCollections } from '../../collections/api/useGetCollections';
 import { Settings, CheckCircle2, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function CreateLinkForm() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const { mutateAsync, isPending, error, data } = useCreateLink();
+  const { data: collectionsData } = useGetCollections();
   
   const { register, handleSubmit, formState: { errors } } = useRHForm<CreateLinkFormData>({
     resolver: zodResolver(createLinkSchema),
@@ -23,6 +25,7 @@ export function CreateLinkForm() {
         password: formData.password || undefined,
         expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
         tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : undefined,
+        collectionId: formData.collectionId || undefined,
       };
       await mutateAsync(payload);
     } catch (err) {
@@ -134,6 +137,21 @@ export function CreateLinkForm() {
                     className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
+                <select
+                  {...register('collectionId')}
+                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+                >
+                  <option value="">None / Uncategorized</option>
+                  {collectionsData?.data?.map(collection => (
+                    <option key={collection.id} value={collection.id}>
+                      {collection.name}
+                    </option>
+                  ))}
+                </select>
               </div>
             </motion.div>
           )}

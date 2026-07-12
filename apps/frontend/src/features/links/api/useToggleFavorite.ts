@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { GetLinksResponse } from './useGetLinks';
+import type { GetLinksResponse } from './useGetLinks';
 
 export const useToggleFavorite = (id: string) => {
   const queryClient = useQueryClient();
