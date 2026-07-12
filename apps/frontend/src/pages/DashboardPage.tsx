@@ -83,10 +83,11 @@ export default function DashboardPage() {
             onChange={(e) => updateParams({ status: e.target.value, page: '1' })}
             className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700"
           >
-            <option value="">All Statuses</option>
+            <option value="">All Statuses (excluding Archived)</option>
             <option value="ACTIVE">Active</option>
             <option value="EXPIRED">Expired</option>
             <option value="DISABLED">Disabled</option>
+            <option value="ARCHIVED">Archived (Only)</option>
           </select>
           <div className="relative flex-1 sm:w-48">
             <Filter className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />

@@ -4,7 +4,7 @@ export interface SmartLink {
   alias: string;
   passwordHash: string | null;
   expiresAt: Date | null;
-  status: 'ACTIVE' | 'EXPIRED' | 'DISABLED';
+  status: 'ACTIVE' | 'EXPIRED' | 'DISABLED' | 'ARCHIVED' | 'DELETED';
   title: string | null;
   description: string | null;
   tags: any;
