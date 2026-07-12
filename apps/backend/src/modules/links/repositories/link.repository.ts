@@ -94,4 +94,16 @@ export class LinkRepository {
     });
     return updated as SmartLink;
   }
+
+  async softDelete(id: string, originalAlias: string): Promise<SmartLink> {
+    const deletedAlias = `${originalAlias}_del_${Date.now()}`;
+    const updated = await prisma.smartLink.update({
+      where: { id },
+      data: {
+        status: 'DELETED',
+        alias: deletedAlias,
+      },
+    });
+    return updated as SmartLink;
+  }
 }

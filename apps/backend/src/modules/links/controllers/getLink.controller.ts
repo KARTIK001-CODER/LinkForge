@@ -19,6 +19,11 @@ export const getLink = async (req: Request, res: Response) => {
       return;
     }
 
+    if (data.status === 'DELETED') {
+      res.status(410).json({ success: false, message: 'This link is no longer available' });
+      return;
+    }
+
     res.status(200).json({ success: true, data });
   } catch (error) {
     console.error('Error fetching link details:', error);

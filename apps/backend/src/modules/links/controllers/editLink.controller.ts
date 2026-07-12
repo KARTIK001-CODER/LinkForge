@@ -5,7 +5,7 @@ import { z } from 'zod';
 
 export const editLink = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { id } = req.params;
+    const id = req.params.id as string;
     
     // In a real app, verify user owns this link using req.user (IDOR protection)
     
@@ -23,7 +23,7 @@ export const editLink = async (req: Request, res: Response): Promise<void> => {
       res.status(400).json({
         status: 'error',
         message: 'Validation failed',
-        errors: error.errors,
+        errors: (error as any).errors,
       });
       return;
     }
