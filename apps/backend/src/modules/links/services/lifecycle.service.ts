@@ -45,4 +45,22 @@ export class LifecycleService {
     // or we could check expiresAt here, but KISS for now as FDD says EXPIRED takes precedence anyway during routing.
     return this.linkRepository.update(id, { status: 'ACTIVE' });
   }
+
+  async delete(id: string): Promise<SmartLink> {
+    const existingLink = await this.linkRepository.findById(id);
+    
+    if (!existingLink) {
+      const error = new Error('Link not found');
+      error.name = 'NotFoundError';
+      throw error;
+    }
+
+    if (existingLink.status === 'DELETED') {
+      const error = new Error('Link is already deleted');
+      error.name = 'InvalidTransitionError';
+      throw error;
+    }
+
+    return this.linkRepository.softDelete(id, existingLink.alias);
+  }
 }

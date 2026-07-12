@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { format } from 'date-fns';
 import { Link } from 'react-router-dom';
-import { Lock, Link2, ExternalLink, Archive, RefreshCw, Edit2 } from 'lucide-react';
+import { Lock, Link2, ExternalLink, Archive, RefreshCw, Edit2, Trash2 } from 'lucide-react';
 import type { LinkItem } from '../api/useGetLinks';
 import { EditLinkModal } from './EditLinkModal';
 import { ConfirmModal } from '../../../components/ConfirmModal';
 import { useArchiveLink } from '../api/useArchiveLink';
 import { useRestoreLink } from '../api/useRestoreLink';
+import { useDeleteLink } from '../api/useDeleteLink';
 
 interface DashboardTableProps {
   links: LinkItem[];
@@ -20,9 +21,11 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
   const [archivingLink, setArchivingLink] = useState<LinkItem | null>(null);
   const [restoringLink, setRestoringLink] = useState<LinkItem | null>(null);
+  const [deletingLink, setDeletingLink] = useState<LinkItem | null>(null);
 
   const archiveMutation = useArchiveLink(archivingLink?.id || '');
   const restoreMutation = useRestoreLink(restoringLink?.id || '');
+  const deleteMutation = useDeleteLink(deletingLink?.id || '');
 
   const handleArchive = () => {
     archiveMutation.mutate(undefined, {
@@ -33,6 +36,12 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
   const handleRestore = () => {
     restoreMutation.mutate(undefined, {
       onSuccess: () => setRestoringLink(null),
+    });
+  };
+
+  const handleDelete = () => {
+    deleteMutation.mutate(undefined, {
+      onSuccess: () => setDeletingLink(null),
     });
   };
 
@@ -164,7 +173,7 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                       </button>
                       <button 
                         onClick={() => setArchivingLink(link)}
-                        className="text-gray-400 hover:text-orange-600 transition-colors"
+                        className="text-gray-400 hover:text-orange-600 mr-2 transition-colors"
                         title="Archive Link"
                       >
                         <Archive className="w-4 h-4 inline" />
@@ -173,12 +182,19 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                   ) : (
                     <button 
                       onClick={() => setRestoringLink(link)}
-                      className="text-gray-400 hover:text-green-600 transition-colors"
+                      className="text-gray-400 hover:text-green-600 mr-2 transition-colors"
                       title="Restore Link"
                     >
                       <RefreshCw className="w-4 h-4 inline" />
                     </button>
                   )}
+                  <button 
+                    onClick={() => setDeletingLink(link)}
+                    className="text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete Link"
+                  >
+                    <Trash2 className="w-4 h-4 inline" />
+                  </button>
                 </td>
               </tr>
             ))}
@@ -212,6 +228,18 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
         message={`Are you sure you want to restore /${restoringLink?.alias}? It will reappear on your main dashboard.`}
         confirmText="Restore"
         isLoading={restoreMutation.isPending}
+      />
+
+      <ConfirmModal
+        isOpen={!!deletingLink}
+        onClose={() => setDeletingLink(null)}
+        onConfirm={handleDelete}
+        title="Delete Smart Link?"
+        message={<>This action is irreversible. The link will immediately stop working, but historical aggregate analytics will be preserved.</>}
+        confirmText="Delete Permanently"
+        requireInputToConfirm={deletingLink?.alias}
+        isDanger={true}
+        isLoading={deleteMutation.isPending}
       />
     </>
   );
