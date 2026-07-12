@@ -1,5 +1,7 @@
 import { LinkRepository } from '../../links/repositories/link.repository';
 import { RedirectResult, RedirectStatus } from '../models/redirect.domain';
+import { ContextExtractorService } from './context-extractor.service';
+import { RulesEngineService } from './rules-engine.service';
 import jwt from 'jsonwebtoken';
 
 export class RedirectService {
@@ -9,7 +11,7 @@ export class RedirectService {
     this.linkRepository = new LinkRepository();
   }
 
-  async resolveAlias(alias: string, token?: string): Promise<RedirectResult> {
+  async resolveAlias(alias: string, ip: string, userAgent: string, token?: string): Promise<RedirectResult> {
     const link = await this.linkRepository.findByAlias(alias);
 
     if (!link) {
@@ -48,11 +50,21 @@ export class RedirectService {
       }
     }
 
-    // Security check: ensure URL is safe to redirect to
+    // Default destination
     let destinationUrl = link.destinationUrl;
+
+    // Epic 2 Story 2.5 - Evaluate Smart Rules
+    if (link.rules && link.rules.length > 0) {
+      const context = ContextExtractorService.extractContext(ip, userAgent);
+      const ruleDestination = RulesEngineService.evaluate(link.rules, context);
+      
+      if (ruleDestination) {
+        destinationUrl = ruleDestination;
+      }
+    }
+
+    // Security check: ensure URL is safe to redirect to
     if (!destinationUrl.startsWith('http://') && !destinationUrl.startsWith('https://')) {
-      // Default to https if protocol is missing, or reject.
-      // But Zod validated it on creation. If malicious data got in, prefix it safely.
       destinationUrl = `https://${destinationUrl}`;
     }
 
@@ -69,7 +81,8 @@ export class RedirectService {
     // Fire and forget
     Promise.resolve().then(() => {
       // Analytics tracking logic will go here
-      // console.log(`[Analytics] Tracked click for link ${linkId}`);
     });
   }
 }
+
+
