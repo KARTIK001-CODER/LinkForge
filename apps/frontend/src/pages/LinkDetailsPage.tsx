@@ -5,6 +5,7 @@ import { LinkMetadataCard } from '../features/links/components/LinkMetadataCard'
 import { LinkQuickStats } from '../features/links/components/LinkQuickStats';
 import { QRCodeModal } from '../features/links/components/QRCodeModal';
 import { ArrowLeft, Copy, QrCode, ExternalLink, Link2, AlertTriangle } from 'lucide-react';
+import { FavoriteButton } from '../features/links/components/FavoriteButton';
 
 export default function LinkDetailsPage() {
   const { alias } = useParams<{ alias: string }>();
@@ -71,7 +72,12 @@ export default function LinkDetailsPage() {
       <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-bold text-gray-900 break-all">{link.alias}</h1>
+            <h1 className="text-3xl font-bold text-gray-900 break-all flex items-center">
+              {link.alias}
+              <div className="ml-2 mt-1">
+                <FavoriteButton link={link} />
+              </div>
+            </h1>
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
               link.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
               link.status === 'EXPIRED' ? 'bg-red-100 text-red-800' : 

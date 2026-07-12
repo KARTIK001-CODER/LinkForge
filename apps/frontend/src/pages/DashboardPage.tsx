@@ -15,6 +15,8 @@ export default function DashboardPage() {
   const sortBy = searchParams.get('sortBy') || 'createdAt';
   const sortOrder = searchParams.get('sortOrder') || 'desc';
 
+  const isFavorite = searchParams.get('isFavorite') || '';
+
   const [searchInput, setSearchInput] = useState(search);
 
   const { data, isLoading, isError, error } = useGetLinks({
@@ -23,6 +25,7 @@ export default function DashboardPage() {
     search,
     status,
     tags,
+    isFavorite,
     sortBy,
     sortOrder,
   });
@@ -89,6 +92,16 @@ export default function DashboardPage() {
             <option value="DISABLED">Disabled</option>
             <option value="ARCHIVED">Archived (Only)</option>
           </select>
+          <button
+            onClick={() => updateParams({ isFavorite: isFavorite === 'true' ? '' : 'true', page: '1' })}
+            className={`px-4 py-2 rounded-lg border text-sm font-medium transition-colors ${
+              isFavorite === 'true' 
+                ? 'bg-yellow-50 border-yellow-400 text-yellow-700' 
+                : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            Favorites Only
+          </button>
           <div className="relative flex-1 sm:w-48">
             <Filter className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" />
             <input

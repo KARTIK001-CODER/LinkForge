@@ -34,10 +34,11 @@ export class LinkRepository {
     search?: string;
     status?: string;
     tags?: string[];
+    isFavorite?: boolean;
     sortBy: 'createdAt' | 'alias';
     sortOrder: 'asc' | 'desc';
   }): Promise<{ items: SmartLink[]; totalItems: number }> {
-    const { skip, take, search, status, tags, sortBy, sortOrder } = params;
+    const { skip, take, search, status, tags, isFavorite, sortBy, sortOrder } = params;
 
     const where: any = {};
 
@@ -60,6 +61,10 @@ export class LinkRepository {
       where.tags = {
         array_contains: tags,
       };
+    }
+
+    if (isFavorite !== undefined) {
+      where.isFavorite = isFavorite;
     }
 
     const [items, totalItems] = await prisma.$transaction([
@@ -90,6 +95,7 @@ export class LinkRepository {
         description: data.description,
         status: data.status,
         tags: data.tags,
+        isFavorite: data.isFavorite,
       },
     });
     return updated as SmartLink;

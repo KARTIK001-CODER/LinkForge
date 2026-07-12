@@ -20,4 +20,5 @@ model SmartLink {
   clicks         Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+  isFavorite     Boolean  @default(false)
 }

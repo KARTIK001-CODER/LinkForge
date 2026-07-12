@@ -11,6 +11,7 @@ export interface SmartLink {
   clicks: number;
   createdAt: Date;
   updatedAt: Date;
+  isFavorite: boolean;
 }
 
 export class AliasConflictError extends Error {

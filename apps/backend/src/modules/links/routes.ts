@@ -4,6 +4,7 @@ import { getLinks } from './controllers/getLinks.controller';
 import { getLink } from './controllers/getLink.controller';
 import { editLink } from './controllers/editLink.controller';
 import { archiveLink, restoreLink, deleteLink } from './controllers/lifecycle.controller';
+import { favoriteLink, unfavoriteLink } from './controllers/favorite.controller';
 
 const router = Router();
 
@@ -14,5 +15,8 @@ router.patch('/:id', editLink);
 router.patch('/:id/archive', archiveLink);
 router.patch('/:id/restore', restoreLink);
 router.delete('/:id', deleteLink);
+
+router.patch('/:id/favorite', favoriteLink);
+router.patch('/:id/unfavorite', unfavoriteLink);
 
 export default router;
