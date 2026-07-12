@@ -2,6 +2,8 @@ import { LinkRepository } from '../../links/repositories/link.repository';
 import { RedirectResult, RedirectStatus } from '../models/redirect.domain';
 import { ContextExtractorService } from './context-extractor.service';
 import { RulesEngineService } from './rules-engine.service';
+import { TrafficDistributionService } from './traffic-distribution.service';
+import { TrafficVariant } from '../../links/models/link.domain';
 import jwt from 'jsonwebtoken';
 
 export class RedirectService {
@@ -53,7 +55,24 @@ export class RedirectService {
     // Default destination
     let destinationUrl = link.destinationUrl;
 
-    // Epic 2 Story 2.5 - Evaluate Smart Rules
+    // Epic 2 Story 2.6 - Evaluate Traffic Variants (A/B Testing)
+    if (link.trafficVariants) {
+      const parsedVariants = typeof link.trafficVariants === 'string' 
+        ? JSON.parse(link.trafficVariants) 
+        : link.trafficVariants;
+        
+      const variantDestination = TrafficDistributionService.resolveVariant(
+        parsedVariants as TrafficVariant[], 
+        ip, 
+        userAgent
+      );
+      
+      if (variantDestination) {
+        destinationUrl = variantDestination;
+      }
+    }
+
+    // Epic 2 Story 2.5 - Evaluate Smart Rules (Overrides generic traffic variants)
     if (link.rules && link.rules.length > 0) {
       const context = ContextExtractorService.extractContext(ip, userAgent);
       const ruleDestination = RulesEngineService.evaluate(link.rules, context);
