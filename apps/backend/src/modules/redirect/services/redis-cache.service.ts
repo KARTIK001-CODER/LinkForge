@@ -21,8 +21,10 @@ export class RedisCacheService {
         commandTimeout: 50, // Strict 50ms timeout on commands to prevent hanging
       });
 
-      this.instance.on('error', (err) => {
-        console.warn(`[RedisCache] Connection Error: ${err.message}. Gracefully falling back to Postgres.`);
+      this.instance.on('error', (err: any) => {
+        if (err.message && err.message.includes('ECONNREFUSED')) return;
+        if (err.name === 'AggregateError') return;
+        if (err.code === 'ECONNREFUSED') return;
         // Don't kill the app, just let the instance degrade
       });
 
@@ -46,7 +48,7 @@ export class RedisCacheService {
       MetricsService.cacheHits.inc({ cache_type: 'redis' });
       return JSON.parse(data) as T;
     } catch (e) {
-      console.warn(`[RedisCache] Failed to get key ${key}`);
+      // console.warn(`[RedisCache] Failed to get key ${key}`);
       MetricsService.cacheMisses.inc({ cache_type: 'redis' });
       return null;
     }
@@ -60,7 +62,7 @@ export class RedisCacheService {
       const stringified = JSON.stringify(value);
       await client.setex(key, ttlSeconds, stringified);
     } catch (e) {
-      console.warn(`[RedisCache] Failed to set key ${key}`);
+      // console.warn(`[RedisCache] Failed to set key ${key}`);
     }
   }
 
@@ -71,7 +73,7 @@ export class RedisCacheService {
     try {
       await client.del(key);
     } catch (e) {
-      console.warn(`[RedisCache] Failed to delete key ${key}`);
+      // console.warn(`[RedisCache] Failed to delete key ${key}`);
     }
   }
 

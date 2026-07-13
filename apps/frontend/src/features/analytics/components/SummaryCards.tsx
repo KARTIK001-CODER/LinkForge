@@ -1,5 +1,5 @@
 import React from 'react';
-import { AnalyticsSummary } from '../api/useAnalyticsSummary';
+import type { AnalyticsSummary } from '../api/useAnalyticsSummary';
 import { MousePointerClick, Users, Globe, ArrowUpRight } from 'lucide-react';
 
 interface SummaryCardsProps {
