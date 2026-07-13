@@ -37,7 +37,7 @@ export class LinkRepository {
       }
     });
   }, {
-    timeout: 10000, // 10000ms max for a DB query
+    timeout: 60000, // 60000ms max to allow for incredibly slow Neon Serverless DB cold starts
     errorThresholdPercentage: 50, // Trip if 50% fail
     resetTimeout: 5000 // Wait 5s before trying again
   });

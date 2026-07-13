@@ -1,4 +1,4 @@
-import UAParser from 'ua-parser-js';
+import { UAParser } from 'ua-parser-js';
 import geoip from 'geoip-lite';
 
 export interface EnrichmentResult {

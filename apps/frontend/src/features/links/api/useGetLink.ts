@@ -10,7 +10,7 @@ export const useGetLink = (alias: string) => {
   return useQuery({
     queryKey: ['link', alias],
     queryFn: async (): Promise<GetLinkResponse> => {
-      const response = await fetch(`http://localhost:4000/api/v1/links/${alias}`);
+      const response = await fetch(`/api/v1/links/${alias}`);
       if (!response.ok) {
         if (response.status === 404) {
           throw new Error('Link not found');
@@ -19,6 +19,6 @@ export const useGetLink = (alias: string) => {
       }
       return response.json();
     },
-    retry: false, // Don't retry if it's a 404
+    retry: false,
   });
 };

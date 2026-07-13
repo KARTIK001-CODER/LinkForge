@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../../../lib/prisma';
 
 export class ExportService {
   async createExportJob(linkId: string): Promise<string> {
@@ -11,33 +9,39 @@ export class ExportService {
       },
     });
 
-    // In a full implementation, we'd enqueue this job to a background worker
-    // which would query analytics events, generate a CSV, upload to S3,
-    // and update the job status with the fileUrl.
-    
-    // For Epic 3 demonstration, we mock the asynchronous completion:
-    setTimeout(async () => {
-      try {
-        // Mock generation delay
-        await new Promise((resolve) => setTimeout(resolve, 2000));
-        
-        // Update job to COMPLETE with a mock URL
-        await prisma.exportJob.update({
-          where: { id: job.id },
-          data: {
-            status: 'COMPLETED',
-            fileUrl: `https://mock-s3-bucket.linkforge.com/exports/${job.id}.csv`,
-          },
-        });
-      } catch (err) {
-        await prisma.exportJob.update({
-          where: { id: job.id },
-          data: { status: 'FAILED' },
-        });
-      }
-    }, 100);
+    this.processExportJob(job.id, linkId);
 
     return job.id;
+  }
+
+  private async processExportJob(jobId: string, linkId: string) {
+    try {
+      const events = await prisma.analyticsEvent.findMany({
+        where: { linkId },
+        orderBy: { timestamp: 'desc' },
+        take: 10000,
+      });
+
+      const csvHeader = 'timestamp,country,browser,os,deviceType,referrer,utmSource,utmMedium,utmCampaign\n';
+      const csvRows = events.map(e =>
+        `${e.timestamp.toISOString()},${e.country || ''},${e.browser || ''},${e.os || ''},${e.deviceType || ''},${e.referrer || ''},${e.utmSource || ''},${e.utmMedium || ''},${e.utmCampaign || ''}`
+      ).join('\n');
+
+      const csvContent = csvHeader + csvRows;
+
+      await prisma.exportJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'COMPLETED',
+          fileUrl: `data:text/csv;base64,${Buffer.from(csvContent).toString('base64')}`,
+        },
+      });
+    } catch (err) {
+      await prisma.exportJob.update({
+        where: { id: jobId },
+        data: { status: 'FAILED' },
+      });
+    }
   }
 
   async getExportJob(jobId: string) {

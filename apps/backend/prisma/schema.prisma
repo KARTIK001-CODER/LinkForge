@@ -78,6 +78,7 @@ model VisitorSession {
   endedAt   DateTime?
   
   @@index([visitorId, linkId])
+  @@index([linkId])
 }
 
 model AnalyticsEvent {
@@ -100,6 +101,12 @@ model AnalyticsEvent {
   utmCampaign String?  @db.VarChar(100)
   
   @@index([linkId, timestamp])
+  @@index([linkId, country])
+  @@index([linkId, browser])
+  @@index([linkId, os])
+  @@index([linkId, deviceType])
+  @@index([linkId, referrer])
+  @@index([linkId, visitorId])
 }
 
 model DailyMetrics {

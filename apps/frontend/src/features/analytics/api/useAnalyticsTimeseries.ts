@@ -14,10 +14,11 @@ export const useAnalyticsTimeseries = (linkId: string, startDate?: string, endDa
       const params = new URLSearchParams();
       if (startDate) params.append('startDate', startDate);
       if (endDate) params.append('endDate', endDate);
-      
+
       const response = await axios.get(`/api/v1/analytics/links/${linkId}/timeseries?${params.toString()}`);
       return response.data;
     },
     enabled: !!linkId,
+    staleTime: 30_000,
   });
 };

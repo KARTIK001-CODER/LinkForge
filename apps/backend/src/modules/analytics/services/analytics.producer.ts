@@ -4,6 +4,7 @@ import { RawAnalyticsEvent } from '../models/analytics.domain';
 export class AnalyticsProducer {
   private static instance: Redis | null = null;
   private static readonly STREAM_KEY = 'analytics:events';
+  private static droppedCount = 0;
 
   private static getClient(): Redis | null {
     if (this.instance) return this.instance;
@@ -18,12 +19,26 @@ export class AnalyticsProducer {
       this.instance = new Redis(redisUrl, {
         maxRetriesPerRequest: 1,
         enableOfflineQueue: false,
+        commandTimeout: 100,
       });
 
       this.instance.on('error', (err: any) => {
-        if (err.message && err.message.includes('ECONNREFUSED')) return;
-        if (err.name === 'AggregateError') return;
-        if (err.code === 'ECONNREFUSED') return;
+        if (err.message && err.message.includes('ECONNREFUSED')) {
+          if (this.droppedCount % 100 === 0) {
+            console.warn('[AnalyticsProducer] Redis connection refused');
+          }
+          this.droppedCount++;
+          return;
+        }
+        if (err.code === 'ECONNREFUSED') {
+          this.droppedCount++;
+          return;
+        }
+      });
+
+      this.instance.on('connect', () => {
+        console.log('[AnalyticsProducer] Connected to Redis');
+        this.droppedCount = 0;
       });
 
       return this.instance;
@@ -35,15 +50,21 @@ export class AnalyticsProducer {
 
   static async publishEvent(event: RawAnalyticsEvent): Promise<void> {
     const client = this.getClient();
-    if (!client) return;
+    if (!client) {
+      this.droppedCount++;
+      if (this.droppedCount % 100 === 1) {
+        console.warn(`[AnalyticsProducer] Dropped event #${this.droppedCount} — Redis not available`);
+      }
+      return;
+    }
 
     try {
-      // Fire and forget publishing to a Redis stream
-      // We stringify the event, pushing it as a hash field 'payload'
       await client.xadd(this.STREAM_KEY, '*', 'payload', JSON.stringify(event));
-    } catch (error) {
-      // console.error('[AnalyticsProducer] Failed to publish event', error);
-      // We swallow the error here because the redirect engine MUST NOT fail if analytics fails
+    } catch (error: any) {
+      this.droppedCount++;
+      if (this.droppedCount % 10 === 1) {
+        console.error(`[AnalyticsProducer] Failed to publish event #${this.droppedCount}: ${error.message}`);
+      }
     }
   }
 }

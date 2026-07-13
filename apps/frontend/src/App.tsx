@@ -14,7 +14,16 @@ import ExpiredPage from './pages/errors/ExpiredPage';
 import ProtectedPage from './pages/errors/ProtectedPage';
 import ServerErrorPage from './pages/errors/ServerErrorPage';
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,
+      gcTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 function App() {
   return (
@@ -28,7 +37,7 @@ function App() {
             <Route path="links/:alias" element={<LinkDetailsPage />} />
             <Route path="links/:alias/analytics" element={<AnalyticsPage />} />
           </Route>
-          
+
           <Route path="/error/not-found" element={<NotFoundPage />} />
           <Route path="/error/inactive" element={<InactivePage />} />
           <Route path="/error/expired" element={<ExpiredPage />} />

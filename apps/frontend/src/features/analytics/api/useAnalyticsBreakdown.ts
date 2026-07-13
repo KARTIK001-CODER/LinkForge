@@ -14,5 +14,6 @@ export const useAnalyticsBreakdown = (linkId: string, dimension: string) => {
       return response.data;
     },
     enabled: !!linkId && !!dimension,
+    staleTime: 60_000,
   });
 };

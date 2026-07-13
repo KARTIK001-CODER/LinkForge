@@ -87,21 +87,11 @@ export class RedirectService {
       destinationUrl = `https://${destinationUrl}`;
     }
 
-    // TODO: Epic 3 - Fire Analytics Event (Async, non-blocking)
-    this.executeAnalyticsHook(link.id);
-
     return { 
       status: RedirectStatus.SUCCESS,
       destinationUrl,
       linkId: link.id
     };
-  }
-
-  private executeAnalyticsHook(linkId: string) {
-    // Fire and forget
-    Promise.resolve().then(() => {
-      // Analytics tracking logic will go here
-    });
   }
 }
 

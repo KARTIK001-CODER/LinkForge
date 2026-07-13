@@ -3,10 +3,26 @@ import { AnalyticsWorker } from './modules/analytics/services/analytics.worker';
 
 const PORT = process.env.PORT || 4000;
 
-app.listen(PORT, () => {
+const analyticsWorker = new AnalyticsWorker();
+
+const server = app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  
-  // Start the background analytics worker
-  const analyticsWorker = new AnalyticsWorker();
+
   analyticsWorker.start().catch(console.error);
 });
+
+const shutdown = async (signal: string) => {
+  console.log(`[Server] Received ${signal}, shutting down gracefully...`);
+  analyticsWorker.stop();
+  server.close(() => {
+    console.log('[Server] HTTP server closed');
+    process.exit(0);
+  });
+  setTimeout(() => {
+    console.error('[Server] Forced shutdown after timeout');
+    process.exit(1);
+  }, 10000);
+};
+
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));
