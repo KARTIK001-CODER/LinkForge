@@ -97,7 +97,7 @@ export default function LinkDetailsPage() {
         <div className="flex items-center gap-3 shrink-0">
           <Link 
             to={`/links/${alias}/analytics`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-900 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition"
           >
             <Activity className="w-4 h-4 mr-2" />
             Analytics
@@ -105,7 +105,7 @@ export default function LinkDetailsPage() {
 
           <button 
             onClick={() => setQRModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-900 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
           >
             <QrCode className="w-4 h-4 mr-2 text-gray-500" />
             QR Code

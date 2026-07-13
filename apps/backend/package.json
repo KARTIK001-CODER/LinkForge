@@ -12,9 +12,12 @@
   "dependencies": {
     "@prisma/client": "^5.22.0",
     "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
     "geoip-lite": "^1.4.10",
+    "helmet": "^8.0.0",
     "ioredis": "^5.11.1",
     "jiti": "^2.7.0",
     "jsonwebtoken": "^9.0.3",
@@ -25,6 +28,7 @@
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
+    "@types/cookie-parser": "^1.4.8",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/geoip-lite": "^1.4.4",
