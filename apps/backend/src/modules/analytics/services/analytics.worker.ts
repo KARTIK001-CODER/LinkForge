@@ -26,6 +26,12 @@ export class AnalyticsWorker {
     const redisUrl = process.env.REDIS_URL;
     if (redisUrl) {
       this.redis = new Redis(redisUrl, { maxRetriesPerRequest: null });
+      this.redis.on('error', (err: any) => {
+        // Suppress constant ECONNREFUSED logs if Redis is down
+        if (err.message && err.message.includes('ECONNREFUSED')) return;
+        if (err.name === 'AggregateError') return;
+        if (err.code === 'ECONNREFUSED') return;
+      });
     } else {
       console.warn('[AnalyticsWorker] REDIS_URL not set. Worker disabled.');
     }

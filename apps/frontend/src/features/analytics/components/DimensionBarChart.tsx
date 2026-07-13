@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { BreakdownData } from '../api/useAnalyticsBreakdown';
+import type { BreakdownData } from '../api/useAnalyticsBreakdown';
 
 interface DimensionBarChartProps {
   title: string;

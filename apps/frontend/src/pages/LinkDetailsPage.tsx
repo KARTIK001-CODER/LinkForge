@@ -4,7 +4,7 @@ import { useGetLink } from '../features/links/api/useGetLink';
 import { LinkMetadataCard } from '../features/links/components/LinkMetadataCard';
 import { LinkQuickStats } from '../features/links/components/LinkQuickStats';
 import { QRCodeModal } from '../features/links/components/QRCodeModal';
-import { ArrowLeft, Copy, QrCode, ExternalLink, Link2, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Copy, QrCode, ExternalLink, Link2, AlertTriangle, Activity } from 'lucide-react';
 import { FavoriteButton } from '../features/links/components/FavoriteButton';
 import { RulesManager } from '../features/links/components/RulesManager';
 import { TrafficManager } from '../features/links/components/TrafficManager';
@@ -95,6 +95,14 @@ export default function LinkDetailsPage() {
         </div>
         
         <div className="flex items-center gap-3 shrink-0">
+          <Link 
+            to={`/links/${alias}/analytics`}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition"
+          >
+            <Activity className="w-4 h-4 mr-2" />
+            Analytics
+          </Link>
+
           <button 
             onClick={() => setQRModalOpen(true)}
             className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"

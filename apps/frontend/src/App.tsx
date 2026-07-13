@@ -4,6 +4,7 @@ import Layout from './components/Layout';
 import CreateLinkPage from './pages/CreateLinkPage';
 import DashboardPage from './pages/DashboardPage';
 import LinkDetailsPage from './pages/LinkDetailsPage';
+import AnalyticsPage from './pages/AnalyticsPage';
 
 import CollectionsPage from './pages/CollectionsPage';
 
@@ -25,6 +26,7 @@ function App() {
             <Route path="collections" element={<CollectionsPage />} />
             <Route path="create" element={<CreateLinkPage />} />
             <Route path="links/:alias" element={<LinkDetailsPage />} />
+            <Route path="links/:alias/analytics" element={<AnalyticsPage />} />
           </Route>
           
           <Route path="/error/not-found" element={<NotFoundPage />} />

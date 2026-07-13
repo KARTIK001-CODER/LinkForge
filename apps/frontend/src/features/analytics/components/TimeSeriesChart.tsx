@@ -1,6 +1,6 @@
 import React from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
-import { TimeseriesData } from '../api/useAnalyticsTimeseries';
+import type { TimeseriesData } from '../api/useAnalyticsTimeseries';
 
 interface TimeSeriesChartProps {
   data?: TimeseriesData[];

@@ -20,8 +20,10 @@ export class AnalyticsProducer {
         enableOfflineQueue: false,
       });
 
-      this.instance.on('error', (err) => {
-        console.warn(`[AnalyticsProducer] Redis Error: ${err.message}`);
+      this.instance.on('error', (err: any) => {
+        if (err.message && err.message.includes('ECONNREFUSED')) return;
+        if (err.name === 'AggregateError') return;
+        if (err.code === 'ECONNREFUSED') return;
       });
 
       return this.instance;
@@ -40,7 +42,7 @@ export class AnalyticsProducer {
       // We stringify the event, pushing it as a hash field 'payload'
       await client.xadd(this.STREAM_KEY, '*', 'payload', JSON.stringify(event));
     } catch (error) {
-      console.error('[AnalyticsProducer] Failed to publish event', error);
+      // console.error('[AnalyticsProducer] Failed to publish event', error);
       // We swallow the error here because the redirect engine MUST NOT fail if analytics fails
     }
   }
