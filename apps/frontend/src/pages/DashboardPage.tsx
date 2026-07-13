@@ -120,14 +120,14 @@ export default function DashboardPage() {
             placeholder="Search by alias or URL..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
           />
         </div>
         <div className="flex gap-4">
           <select
             value={status}
             onChange={(e) => updateParams({ status: e.target.value, page: '1' })}
-            className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700"
+            className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700"
           >
             <option value="">All Statuses (excluding Archived)</option>
             <option value="ACTIVE">Active</option>
@@ -152,7 +152,7 @@ export default function DashboardPage() {
               placeholder="Filter tags..."
               value={tags}
               onChange={(e) => updateParams({ tags: e.target.value, page: '1' })}
-              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+              className="w-full pl-9 pr-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none text-sm"
             />
           </div>
         </div>
@@ -178,14 +178,14 @@ export default function DashboardPage() {
             <button
               onClick={() => updateParams({ page: String(page - 1) })}
               disabled={page <= 1}
-              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="relative inline-flex items-center rounded-md border border-gray-300 bg-white text-gray-900 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Previous
             </button>
             <button
               onClick={() => updateParams({ page: String(page + 1) })}
               disabled={page >= data.data.meta.totalPages}
-              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              className="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white text-gray-900 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
             >
               Next
             </button>
