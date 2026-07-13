@@ -92,7 +92,8 @@ export class RedirectService {
 
     return { 
       status: RedirectStatus.SUCCESS,
-      destinationUrl 
+      destinationUrl,
+      linkId: link.id
     };
   }
 
