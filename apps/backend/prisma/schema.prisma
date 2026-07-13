@@ -27,6 +27,13 @@ model SmartLink {
   trafficVariants Json?   @default("[]")
   collection     Collection? @relation(fields: [collectionId], references: [id], onDelete: SetNull)
   rules          RedirectRule[]
+
+  analyticsEvents AnalyticsEvent[]
+  dailyMetrics    DailyMetrics[]
+  monthlyMetrics  MonthlyMetrics[]
+  aggregatedMetrics AggregatedMetrics[]
+  exportJobs      ExportJob[]
+  visitorSessions VisitorSession[]
 }
 
 model Collection {
@@ -50,4 +57,90 @@ model RedirectRule {
   updatedAt      DateTime  @updatedAt
 
   @@index([linkId, priority])
+}
+
+model Visitor {
+  id        String   @id @default(uuid())
+  hash      String   @unique @db.VarChar(255) // Hashed IP + UA + daily salt
+  createdAt DateTime @default(now())
+  
+  events    AnalyticsEvent[]
+  sessions  VisitorSession[]
+}
+
+model VisitorSession {
+  id        String   @id @default(uuid())
+  visitorId String
+  visitor   Visitor  @relation(fields: [visitorId], references: [id], onDelete: Cascade)
+  linkId    String
+  link      SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  startedAt DateTime @default(now())
+  endedAt   DateTime?
+  
+  @@index([visitorId, linkId])
+}
+
+model AnalyticsEvent {
+  id          String   @id @default(uuid())
+  linkId      String
+  link        SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  visitorId   String?
+  visitor     Visitor?  @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  timestamp   DateTime @default(now())
+  
+  country     String?  @db.VarChar(50)
+  city        String?  @db.VarChar(100)
+  browser     String?  @db.VarChar(50)
+  os          String?  @db.VarChar(50)
+  deviceType  String?  @db.VarChar(50)
+  referrer    String?  @db.VarChar(255)
+  
+  utmSource   String?  @db.VarChar(100)
+  utmMedium   String?  @db.VarChar(100)
+  utmCampaign String?  @db.VarChar(100)
+  
+  @@index([linkId, timestamp])
+}
+
+model DailyMetrics {
+  id              String   @id @default(uuid())
+  linkId          String
+  link            SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  date            DateTime @db.Date
+  totalClicks     Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  
+  @@unique([linkId, date])
+}
+
+model MonthlyMetrics {
+  id              String   @id @default(uuid())
+  linkId          String
+  link            SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  month           DateTime @db.Date
+  totalClicks     Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  
+  @@unique([linkId, month])
+}
+
+model AggregatedMetrics {
+  id          String   @id @default(uuid())
+  linkId      String
+  link        SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  dimension   String   @db.VarChar(50) // e.g. "country", "browser", "referrer"
+  value       String   @db.VarChar(255) // e.g. "US", "Chrome", "google.com"
+  clicks      Int      @default(0)
+  
+  @@unique([linkId, dimension, value])
+}
+
+model ExportJob {
+  id          String   @id @default(uuid())
+  linkId      String
+  link        SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  status      String   @default("PENDING") @db.VarChar(20)
+  fileUrl     String?  @db.VarChar(2048)
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
 }

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { RedirectService } from '../services/redirect.service';
 import { RedirectStatus } from '../models/redirect.domain';
+import { AnalyticsProducer } from '../../analytics/services/analytics.producer';
 
 const redirectService = new RedirectService();
 
@@ -20,7 +21,18 @@ export class RedirectController {
 
       switch (result.status) {
         case RedirectStatus.SUCCESS:
-          // Log success asynchronously if needed
+          // Fire and forget analytics event
+          if (result.linkId) {
+            AnalyticsProducer.publishEvent({
+              linkId: result.linkId,
+              ip,
+              userAgent,
+              timestamp: new Date(),
+              referrer: req.headers.referer || req.headers.referrer as string | undefined,
+              originalUrl: req.originalUrl
+            });
+          }
+
           console.log(`[Redirect] Alias: ${shortCode}, Result: SUCCESS, Latency: ${Date.now() - startTime}ms`);
           return res.redirect(302, result.destinationUrl!);
 

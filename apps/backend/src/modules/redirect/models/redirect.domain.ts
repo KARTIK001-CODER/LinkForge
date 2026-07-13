@@ -10,4 +10,5 @@ export interface RedirectResult {
   status: RedirectStatus;
   destinationUrl?: string; // Present if SUCCESS
   fallbackUrl?: string; // Present if EXPIRED or INACTIVE with custom fallback
+  linkId?: string; // Added for Analytics tracking
 }
