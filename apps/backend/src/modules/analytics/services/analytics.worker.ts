@@ -5,7 +5,9 @@ import crypto from 'crypto';
 import UAParser from 'ua-parser-js';
 import geoip from 'geoip-lite';
 
-const prisma = new PrismaClient();
+import { AnalyticsRepository } from '../repositories/analytics.repository';
+import { VisitorService } from './visitor.service';
+import { SessionService } from './session.service';
 
 export class AnalyticsWorker {
   private redis: Redis | null = null;
@@ -13,8 +15,16 @@ export class AnalyticsWorker {
   private readonly GROUP_NAME = 'analytics_workers';
   private readonly CONSUMER_NAME = `worker-${process.pid}`;
   private isRunning = false;
+  
+  private analyticsRepo: AnalyticsRepository;
+  private visitorService: VisitorService;
+  private sessionService: SessionService;
 
   constructor() {
+    this.analyticsRepo = new AnalyticsRepository();
+    this.visitorService = new VisitorService(this.analyticsRepo);
+    this.sessionService = new SessionService(this.analyticsRepo);
+    
     const redisUrl = process.env.REDIS_URL;
     if (redisUrl) {
       this.redis = new Redis(redisUrl, { maxRetriesPerRequest: null });
@@ -89,81 +99,51 @@ export class AnalyticsWorker {
   }
 
   private async processEvent(event: RawAnalyticsEvent) {
-    // 1. Generate Anonymous Visitor ID
-    const today = new Date().toISOString().split('T')[0];
-    const salt = process.env.ANALYTICS_SALT || 'default-salt';
-    const hashInput = `${event.ip}-${event.userAgent}-${today}-${salt}`;
-    const visitorHash = crypto.createHash('sha256').update(hashInput).digest('hex');
-
-    // 2. GeoIP Enrichment
-    const geo = geoip.lookup(event.ip);
-    const country = geo?.country || 'Unknown';
-    const city = geo?.city || 'Unknown';
-
-    // 3. User-Agent Enrichment
-    const parser = new UAParser(event.userAgent);
-    const browser = parser.getBrowser().name || 'Unknown';
-    const os = parser.getOS().name || 'Unknown';
-    
-    // Device detection based on UA
-    const deviceType = parser.getDevice().type || 'Desktop'; 
-
-    // 4. UTM Parsing
-    let utmSource, utmMedium, utmCampaign;
-    if (event.originalUrl) {
-      try {
-        const url = new URL(event.originalUrl, 'http://localhost');
-        utmSource = url.searchParams.get('utm_source') || undefined;
-        utmMedium = url.searchParams.get('utm_medium') || undefined;
-        utmCampaign = url.searchParams.get('utm_campaign') || undefined;
-      } catch (e) {}
-    }
-
-    // 5. Database Persistence
     try {
-      // Create or find visitor
-      const visitor = await prisma.visitor.upsert({
-        where: { hash: visitorHash },
-        update: {},
-        create: { hash: visitorHash },
-      });
+      // 1. Process Visitor (hashing logic now in service)
+      const visitorId = await this.visitorService.processVisitor(event.ip, event.userAgent);
 
-      // Update Session logic (simplified for Epic 3: 1 session per visitor per link per day)
-      // Actually we just record the event and create a session if it doesn't exist
-      const session = await prisma.visitorSession.findFirst({
-        where: { visitorId: visitor.id, linkId: event.linkId },
-      });
+      // 2. Track Session
+      await this.sessionService.trackSession(visitorId, event.linkId);
 
-      if (!session) {
-        await prisma.visitorSession.create({
-          data: {
-            visitorId: visitor.id,
-            linkId: event.linkId,
-          }
-        });
+      // 3. GeoIP & User-Agent Enrichment (To be moved in Phase C, currently inline)
+      const geo = geoip.lookup(event.ip);
+      const country = geo?.country || 'Unknown';
+      const city = geo?.city || 'Unknown';
+
+      const parser = new UAParser(event.userAgent);
+      const browser = parser.getBrowser().name || 'Unknown';
+      const os = parser.getOS().name || 'Unknown';
+      const deviceType = parser.getDevice().type || 'Desktop'; 
+
+      // 4. UTM Parsing
+      let utmSource, utmMedium, utmCampaign;
+      if (event.originalUrl) {
+        try {
+          const url = new URL(event.originalUrl, 'http://localhost');
+          utmSource = url.searchParams.get('utm_source') || undefined;
+          utmMedium = url.searchParams.get('utm_medium') || undefined;
+          utmCampaign = url.searchParams.get('utm_campaign') || undefined;
+        } catch (e) {}
       }
 
-      // Record Analytics Event
-      await prisma.analyticsEvent.create({
-        data: {
-          linkId: event.linkId,
-          visitorId: visitor.id,
-          timestamp: new Date(event.timestamp),
-          country,
-          city,
-          browser,
-          os,
-          deviceType,
-          referrer: event.referrer,
-          utmSource,
-          utmMedium,
-          utmCampaign,
-        }
+      // 5. Database Persistence using Repository
+      await this.analyticsRepo.createAnalyticsEvent({
+        ...event,
+        visitorId,
+        country,
+        city,
+        browser,
+        os,
+        deviceType,
+        utmSource,
+        utmMedium,
+        utmCampaign,
       });
       
-    } catch (dbError) {
-      console.error('[AnalyticsWorker] DB Error:', dbError);
-      throw dbError; // Bubble up so message is not acked if we care, or swallow to move on. We swallow in processEvent caller.
+    } catch (error) {
+      console.error('[AnalyticsWorker] DB Error:', error);
+      throw error; 
     }
   }
 }
