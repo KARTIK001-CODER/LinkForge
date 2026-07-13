@@ -7,7 +7,7 @@ interface TimeSeriesChartProps {
   isLoading: boolean;
 }
 
-export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ data, isLoading }) => {
+export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = React.memo(({ data, isLoading }) => {
   if (isLoading || !data) {
     return <div className="h-80 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl w-full" />;
   }
@@ -61,4 +61,4 @@ export const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({ data, isLoadin
       </div>
     </div>
   );
-};
+});

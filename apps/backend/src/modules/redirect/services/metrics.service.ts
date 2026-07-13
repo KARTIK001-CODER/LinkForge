@@ -1,7 +1,6 @@
 import client from 'prom-client';
 import { Request, Response, NextFunction } from 'express';
 
-// Initialize default metrics (CPU, RAM, Event Loop)
 client.collectDefaultMetrics({ prefix: 'linkforge_' });
 
 export class MetricsService {
@@ -9,6 +8,13 @@ export class MetricsService {
     name: 'linkforge_redirect_duration_seconds',
     help: 'Duration of redirect requests in seconds',
     labelNames: ['status'],
+    buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5]
+  });
+
+  public static readonly apiLatency = new client.Histogram({
+    name: 'linkforge_api_duration_seconds',
+    help: 'Duration of API requests in seconds',
+    labelNames: ['method', 'path', 'status'],
     buckets: [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5]
   });
 
@@ -46,19 +52,26 @@ export class MetricsService {
   }
 }
 
-// Express Middleware for HTTP latency tracking
 export const metricsMiddleware = (req: Request, res: Response, next: NextFunction) => {
   const start = process.hrtime();
 
   res.on('finish', () => {
-    // Only track redirect endpoint for core performance
-    if (req.path.startsWith('/api/') || req.path === '/health' || req.path === '/metrics') {
+    const diff = process.hrtime(start);
+    const durationInSeconds = diff[0] + diff[1] / 1e9;
+
+    if (req.path === '/health' || req.path === '/metrics') {
       return;
     }
 
-    const diff = process.hrtime(start);
-    const durationInSeconds = diff[0] + diff[1] / 1e9;
-    
+    if (req.path.startsWith('/api/')) {
+      MetricsService.apiLatency.observe({
+        method: req.method,
+        path: req.path.split('?')[0].replace(/\/[a-f0-9-]{36}/g, '/:id'),
+        status: res.statusCode.toString()
+      }, durationInSeconds);
+      return;
+    }
+
     MetricsService.redirectLatency.observe({ status: res.statusCode.toString() }, durationInSeconds);
   });
 

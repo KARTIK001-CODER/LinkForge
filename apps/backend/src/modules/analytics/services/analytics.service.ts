@@ -1,91 +1,148 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '../../../lib/prisma';
 
 export class AnalyticsService {
-  
-  async getSummary(linkId: string, workspaceId: string) {
-    // Validate that the link belongs to the workspace or is accessible
-    // For Epic 3, we just fetch from AnalyticsEvent
-    
-    const totalClicks = await prisma.analyticsEvent.count({
-      where: { linkId }
-    });
-    
-    // Unique visitors are distinct visitorIds
-    const uniqueVisitorsResult = await prisma.visitorSession.count({
-      where: { linkId } // Since we only create one session per link per visitor per day, this is roughly unique visitors. For exact unique visitors overall:
-    });
-    // Wait, distinct visitorIds
-    const visitors = await prisma.analyticsEvent.groupBy({
-      by: ['visitorId'],
-      where: { linkId, visitorId: { not: null } },
-      _count: true
-    });
-    const uniqueVisitors = visitors.length;
 
-    // Top Referrer
-    const referrers = await prisma.analyticsEvent.groupBy({
-      by: ['referrer'],
-      where: { linkId, referrer: { not: null } },
-      _count: { referrer: true },
-      orderBy: { _count: { referrer: 'desc' } },
-      take: 1
-    });
+  async getSummary(linkId: string, workspaceId: string, startDate?: Date, endDate?: Date) {
+    const dateFilter = startDate || endDate ? {
+      timestamp: {
+        ...(startDate ? { gte: startDate } : {}),
+        ...(endDate ? { lte: endDate } : {}),
+      }
+    } : {};
 
-    const topCountry = await prisma.analyticsEvent.groupBy({
-      by: ['country'],
-      where: { linkId, country: { not: 'Unknown' } },
-      _count: { country: true },
-      orderBy: { _count: { country: 'desc' } },
-      take: 1
-    });
+    const [totalClicks, uniqueVisitorsAgg, referrers, topCountry] = await Promise.all([
+      prisma.analyticsEvent.count({
+        where: { linkId, ...dateFilter }
+      }),
+
+      prisma.analyticsEvent.groupBy({
+        by: ['visitorId'],
+        where: { linkId, visitorId: { not: null }, ...dateFilter },
+        _count: true,
+      }),
+
+      prisma.analyticsEvent.groupBy({
+        by: ['referrer'],
+        where: { linkId, referrer: { not: null }, ...dateFilter },
+        _count: { referrer: true },
+        orderBy: { _count: { referrer: 'desc' } },
+        take: 1,
+      }),
+
+      prisma.analyticsEvent.groupBy({
+        by: ['country'],
+        where: { linkId, country: { not: 'Unknown' }, ...dateFilter },
+        _count: { country: true },
+        orderBy: { _count: { country: 'desc' } },
+        take: 1,
+      }),
+    ]);
 
     return {
       totalClicks,
-      uniqueVisitors,
+      uniqueVisitors: uniqueVisitorsAgg.length,
       topReferrer: referrers.length > 0 ? referrers[0].referrer : 'Direct',
-      topCountry: topCountry.length > 0 ? topCountry[0].country : 'Unknown'
+      topCountry: topCountry.length > 0 ? topCountry[0].country : 'Unknown',
     };
   }
 
   async getTimeseries(linkId: string, startDate: Date, endDate: Date) {
-    // We group by day in memory for now or using raw SQL. Prisma doesn't have date_trunc native yet unless raw.
-    // Given the scale in Epic 3, we should pull the events (or dailyMetrics) and return them.
-    // For simplicity, let's pull from analyticsEvent
-    
+    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (days > 60) {
+      return this.getTimeseriesFromMonthly(linkId, startDate, endDate);
+    }
+    return this.getTimeseriesFromDaily(linkId, startDate, endDate);
+  }
+
+  private async getTimeseriesFromDaily(linkId: string, startDate: Date, endDate: Date) {
+    const dailyMetrics = await prisma.dailyMetrics.findMany({
+      where: {
+        linkId,
+        date: { gte: startDate, lte: endDate },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    if (dailyMetrics.length > 0) {
+      return dailyMetrics.map(d => ({
+        timestamp: d.date.toISOString().split('T')[0],
+        clicks: d.totalClicks,
+        uniqueVisitors: d.uniqueVisitors,
+      }));
+    }
+
     const events = await prisma.analyticsEvent.findMany({
       where: {
         linkId,
-        timestamp: {
-          gte: startDate,
-          lte: endDate,
-        }
+        timestamp: { gte: startDate, lte: endDate },
       },
-      select: {
-        timestamp: true,
-        visitorId: true
-      }
+      select: { timestamp: true, visitorId: true },
     });
 
-    const dailyData: Record<string, { clicks: number, visitors: Set<string> }> = {};
-    
-    events.forEach(e => {
+    const dailyMap: Record<string, { clicks: number; visitors: Set<string> }> = {};
+    for (const e of events) {
       const dateStr = e.timestamp.toISOString().split('T')[0];
-      if (!dailyData[dateStr]) {
-        dailyData[dateStr] = { clicks: 0, visitors: new Set() };
+      if (!dailyMap[dateStr]) {
+        dailyMap[dateStr] = { clicks: 0, visitors: new Set() };
       }
-      dailyData[dateStr].clicks += 1;
+      dailyMap[dateStr].clicks += 1;
       if (e.visitorId) {
-        dailyData[dateStr].visitors.add(e.visitorId);
+        dailyMap[dateStr].visitors.add(e.visitorId);
       }
-    });
+    }
 
-    return Object.entries(dailyData).map(([date, data]) => ({
+    const result = Object.entries(dailyMap).map(([date, data]) => ({
       timestamp: date,
       clicks: data.clicks,
-      uniqueVisitors: data.visitors.size
-    })).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+      uniqueVisitors: data.visitors.size,
+    }));
+    result.sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+    return result;
+  }
+
+  private async getTimeseriesFromMonthly(linkId: string, startDate: Date, endDate: Date) {
+    const monthlyMetrics = await prisma.monthlyMetrics.findMany({
+      where: {
+        linkId,
+        month: { gte: startDate, lte: endDate },
+      },
+      orderBy: { month: 'asc' },
+    });
+
+    if (monthlyMetrics.length > 0) {
+      return monthlyMetrics.map(m => ({
+        timestamp: m.month.toISOString().split('T')[0],
+        clicks: m.totalClicks,
+        uniqueVisitors: m.uniqueVisitors,
+      }));
+    }
+
+    const events = await prisma.analyticsEvent.findMany({
+      where: {
+        linkId,
+        timestamp: { gte: startDate, lte: endDate },
+      },
+      select: { timestamp: true, visitorId: true },
+    });
+
+    const monthlyMap: Record<string, { clicks: number; visitors: Set<string> }> = {};
+    for (const e of events) {
+      const monthStr = e.timestamp.toISOString().slice(0, 7);
+      if (!monthlyMap[monthStr]) {
+        monthlyMap[monthStr] = { clicks: 0, visitors: new Set() };
+      }
+      monthlyMap[monthStr].clicks += 1;
+      if (e.visitorId) {
+        monthlyMap[monthStr].visitors.add(e.visitorId);
+      }
+    }
+
+    return Object.entries(monthlyMap).map(([month, data]) => ({
+      timestamp: month,
+      clicks: data.clicks,
+      uniqueVisitors: data.visitors.size,
+    })).sort((a, b) => a.timestamp.localeCompare(b.timestamp));
   }
 
   async getBreakdown(linkId: string, dimension: 'country' | 'browser' | 'os' | 'deviceType' | 'referrer') {
@@ -94,17 +151,30 @@ export class AnalyticsService {
       throw new Error('Invalid dimension');
     }
 
+    const agg = await prisma.aggregatedMetrics.findMany({
+      where: { linkId, dimension },
+      orderBy: { clicks: 'desc' },
+      take: 10,
+    });
+
+    if (agg.length > 0) {
+      return agg.map(r => ({
+        name: r.value,
+        clicks: r.clicks,
+      }));
+    }
+
     const result = await prisma.analyticsEvent.groupBy({
       by: [dimension as any],
       where: { linkId },
       _count: { [dimension]: true },
       orderBy: { _count: { [dimension as any]: 'desc' } },
-      take: 10
+      take: 10,
     });
 
     return result.map(r => ({
       name: r[dimension as keyof typeof r] || 'Unknown',
-      clicks: (r._count as any)[dimension as any]
+      clicks: (r._count as any)[dimension as any],
     }));
   }
 }

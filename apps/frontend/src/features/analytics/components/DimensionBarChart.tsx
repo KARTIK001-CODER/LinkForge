@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
 import type { BreakdownData } from '../api/useAnalyticsBreakdown';
 
 interface DimensionBarChartProps {
@@ -9,7 +9,7 @@ interface DimensionBarChartProps {
   color?: string;
 }
 
-export const DimensionBarChart: React.FC<DimensionBarChartProps> = ({ title, data, isLoading, color = '#6366f1' }) => {
+export const DimensionBarChart: React.FC<DimensionBarChartProps> = React.memo(({ title, data, isLoading, color = '#6366f1' }) => {
   if (isLoading || !data) {
     return <div className="h-80 bg-gray-100 dark:bg-gray-800 animate-pulse rounded-xl w-full" />;
   }
@@ -50,4 +50,4 @@ export const DimensionBarChart: React.FC<DimensionBarChartProps> = ({ title, dat
       </div>
     </div>
   );
-};
+});

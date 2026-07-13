@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import prisma from '../../../lib/prisma';
 import { EnrichedAnalyticsEvent, VisitorData } from '../models/analytics.domain';
-
-const prisma = new PrismaClient();
 
 export class AnalyticsRepository {
   async upsertVisitor(visitorData: VisitorData) {
@@ -13,19 +11,14 @@ export class AnalyticsRepository {
   }
 
   async findOrCreateSession(visitorId: string, linkId: string) {
-    let session = await prisma.visitorSession.findFirst({
-      where: { visitorId, linkId },
+    const existing = await prisma.visitorSession.findFirst({
+      where: { visitorId, linkId, endedAt: null },
     });
+    if (existing) return existing;
 
-    if (!session) {
-      session = await prisma.visitorSession.create({
-        data: {
-          visitorId,
-          linkId,
-        }
-      });
-    }
-    return session;
+    return prisma.visitorSession.create({
+      data: { visitorId, linkId },
+    });
   }
 
   async createAnalyticsEvent(event: EnrichedAnalyticsEvent) {
@@ -45,5 +38,54 @@ export class AnalyticsRepository {
         utmCampaign: event.utmCampaign,
       }
     });
+  }
+
+  async incrementLinkClicks(linkId: string) {
+    return prisma.smartLink.update({
+      where: { id: linkId },
+      data: { clicks: { increment: 1 } },
+    });
+  }
+
+  async updateDailyMetrics(linkId: string, timestamp: Date, visitorId: string) {
+    const date = new Date(timestamp);
+    date.setUTCHours(0, 0, 0, 0);
+
+    const month = new Date(date);
+    month.setUTCDate(1);
+
+    await prisma.dailyMetrics.upsert({
+      where: { linkId_date: { linkId, date } },
+      update: { totalClicks: { increment: 1 } },
+      create: {
+        linkId,
+        date,
+        totalClicks: 1,
+        uniqueVisitors: 1,
+      },
+    });
+
+    await prisma.monthlyMetrics.upsert({
+      where: { linkId_month: { linkId, month } },
+      update: { totalClicks: { increment: 1 } },
+      create: {
+        linkId,
+        month,
+        totalClicks: 1,
+        uniqueVisitors: 1,
+      },
+    });
+  }
+
+  async updateAggregatedMetric(linkId: string, dimension: string, value: string) {
+    return prisma.aggregatedMetrics.upsert({
+      where: { linkId_dimension_value: { linkId, dimension, value } },
+      update: { clicks: { increment: 1 } },
+      create: { linkId, dimension, value, clicks: 1 },
+    });
+  }
+
+  async recordDbError(type: string) {
+    console.error(`[Analytics] DB Error type=${type}`);
   }
 }

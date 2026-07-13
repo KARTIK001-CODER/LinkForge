@@ -16,5 +16,6 @@ export const useAnalyticsSummary = (linkId: string) => {
       return response.data;
     },
     enabled: !!linkId,
+    staleTime: 15_000,
   });
 };

@@ -12,10 +12,13 @@ export interface SmartLink {
   tags: any;
   clicks: number;
   createdAt: Date;
+  updatedAt: Date;
   isFavorite: boolean;
   collectionId?: string | null;
+  shortUrl?: string;
   rules?: RedirectRule[];
   trafficVariants?: TrafficVariant[] | null;
+  hasPassword?: boolean;
 }
 
 export interface TrafficVariant {

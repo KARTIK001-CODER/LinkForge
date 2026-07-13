@@ -10,25 +10,24 @@ export class RedirectController {
     try {
       const shortCode = req.params.shortCode as string;
       const token = req.query.token as string | undefined;
-      const ip = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || '127.0.0.1';
+      const forwardedFor = req.headers['x-forwarded-for'] as string | undefined;
+      const ip = forwardedFor ? forwardedFor.split(',')[0].trim() : (req.socket.remoteAddress || '127.0.0.1');
       const userAgent = req.headers['user-agent'] || '';
       const startTime = Date.now();
 
       const result = await redirectService.resolveAlias(shortCode, ip, userAgent, token);
 
-      // Construct frontend base URL safely
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
       switch (result.status) {
         case RedirectStatus.SUCCESS:
-          // Fire and forget analytics event
           if (result.linkId) {
             AnalyticsProducer.publishEvent({
               linkId: result.linkId,
               ip,
               userAgent,
               timestamp: new Date(),
-              referrer: req.headers.referer || req.headers.referrer as string | undefined,
+              referrer: (req.headers['referer'] as string) || undefined,
               originalUrl: req.originalUrl
             });
           }
@@ -53,9 +52,8 @@ export class RedirectController {
             return res.redirect(302, result.fallbackUrl);
           }
           return res.redirect(302, `${frontendUrl}/error/expired`);
-          
+
         case RedirectStatus.PASSWORD_REQUIRED:
-          // Epic 2, Story 2.2 - Password protection redirect
           console.log(`[Redirect] Alias: ${shortCode}, Result: PASSWORD_REQUIRED, Latency: ${Date.now() - startTime}ms`);
           return res.redirect(302, `${frontendUrl}/protected/${shortCode}`);
 
@@ -65,13 +63,11 @@ export class RedirectController {
       }
     } catch (error: any) {
       console.error('[Redirect Error]', error);
-      
+
       if (error.name === 'ServiceUnavailableError') {
-        // Fast fail for circuit breaker trips
         return res.status(503).send('Service Unavailable');
       }
 
-      // Fallback on severe error to 500 error page rather than leaking stack traces
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
       return res.redirect(302, `${frontendUrl}/error/500`);
     }

@@ -7,7 +7,7 @@ interface SummaryCardsProps {
   isLoading: boolean;
 }
 
-export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, isLoading }) => {
+export const SummaryCards: React.FC<SummaryCardsProps> = React.memo(({ summary, isLoading }) => {
   if (isLoading || !summary) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -43,4 +43,4 @@ export const SummaryCards: React.FC<SummaryCardsProps> = ({ summary, isLoading }
       })}
     </div>
   );
-};
+});
