@@ -6,11 +6,17 @@ import { SummaryCards } from './SummaryCards';
 import { TimeSeriesChart } from './TimeSeriesChart';
 import { DimensionBarChart } from './DimensionBarChart';
 
+import { Download, Activity } from 'lucide-react';
+import axios from 'axios';
+
 interface AnalyticsDashboardProps {
   linkId: string;
 }
 
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ linkId }) => {
+  const [exportStatus, setExportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [isRealtime, setIsRealtime] = useState(false);
+
   // Using React Query hooks to fetch data
   const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary(linkId);
   const { data: timeseriesData, isLoading: isLoadingTimeseries } = useAnalyticsTimeseries(linkId);
@@ -20,11 +26,46 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ linkId }
   const { data: deviceBreakdown, isLoading: isLoadingDevice } = useAnalyticsBreakdown(linkId, 'deviceType');
   const { data: referrerBreakdown, isLoading: isLoadingReferrer } = useAnalyticsBreakdown(linkId, 'referrer');
 
+  const handleExport = async () => {
+    try {
+      setExportStatus('loading');
+      const res = await axios.post(`/api/v1/analytics/links/${linkId}/export`);
+      console.log('Export Job started:', res.data.jobId);
+      setExportStatus('success');
+      setTimeout(() => setExportStatus('idle'), 3000);
+    } catch (e) {
+      setExportStatus('error');
+      setTimeout(() => setExportStatus('idle'), 3000);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Link Analytics</h1>
-        {/* Date Picker / Real-time toggle could go here in Phase E */}
+        
+        <div className="flex items-center space-x-4">
+          <button 
+            onClick={() => setIsRealtime(!isRealtime)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+              isRealtime 
+                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700'
+            }`}
+          >
+            <Activity className="w-4 h-4" />
+            <span>{isRealtime ? 'Real-time On' : 'Real-time Off'}</span>
+          </button>
+
+          <button 
+            onClick={handleExport}
+            disabled={exportStatus === 'loading'}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            <span>{exportStatus === 'loading' ? 'Exporting...' : exportStatus === 'success' ? 'Started!' : 'Export CSV'}</span>
+          </button>
+        </div>
       </div>
 
       <SummaryCards summary={summary} isLoading={isLoadingSummary} />
