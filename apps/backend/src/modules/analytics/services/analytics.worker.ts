@@ -1,13 +1,9 @@
 import Redis from 'ioredis';
 import { RawAnalyticsEvent } from '../models/analytics.domain';
-import { PrismaClient } from '@prisma/client';
-import crypto from 'crypto';
-import UAParser from 'ua-parser-js';
-import geoip from 'geoip-lite';
-
 import { AnalyticsRepository } from '../repositories/analytics.repository';
 import { VisitorService } from './visitor.service';
 import { SessionService } from './session.service';
+import { EnrichmentService } from './enrichment.service';
 
 export class AnalyticsWorker {
   private redis: Redis | null = null;
@@ -19,11 +15,13 @@ export class AnalyticsWorker {
   private analyticsRepo: AnalyticsRepository;
   private visitorService: VisitorService;
   private sessionService: SessionService;
+  private enrichmentService: EnrichmentService;
 
   constructor() {
     this.analyticsRepo = new AnalyticsRepository();
     this.visitorService = new VisitorService(this.analyticsRepo);
     this.sessionService = new SessionService(this.analyticsRepo);
+    this.enrichmentService = new EnrichmentService();
     
     const redisUrl = process.env.REDIS_URL;
     if (redisUrl) {
@@ -106,39 +104,14 @@ export class AnalyticsWorker {
       // 2. Track Session
       await this.sessionService.trackSession(visitorId, event.linkId);
 
-      // 3. GeoIP & User-Agent Enrichment (To be moved in Phase C, currently inline)
-      const geo = geoip.lookup(event.ip);
-      const country = geo?.country || 'Unknown';
-      const city = geo?.city || 'Unknown';
+      // 3. Enrichment (GeoIP, User-Agent, UTM Parsing)
+      const enrichedData = this.enrichmentService.enrichEvent(event.ip, event.userAgent, event.originalUrl);
 
-      const parser = new UAParser(event.userAgent);
-      const browser = parser.getBrowser().name || 'Unknown';
-      const os = parser.getOS().name || 'Unknown';
-      const deviceType = parser.getDevice().type || 'Desktop'; 
-
-      // 4. UTM Parsing
-      let utmSource, utmMedium, utmCampaign;
-      if (event.originalUrl) {
-        try {
-          const url = new URL(event.originalUrl, 'http://localhost');
-          utmSource = url.searchParams.get('utm_source') || undefined;
-          utmMedium = url.searchParams.get('utm_medium') || undefined;
-          utmCampaign = url.searchParams.get('utm_campaign') || undefined;
-        } catch (e) {}
-      }
-
-      // 5. Database Persistence using Repository
+      // 4. Database Persistence using Repository
       await this.analyticsRepo.createAnalyticsEvent({
         ...event,
         visitorId,
-        country,
-        city,
-        browser,
-        os,
-        deviceType,
-        utmSource,
-        utmMedium,
-        utmCampaign,
+        ...enrichedData,
       });
       
     } catch (error) {
