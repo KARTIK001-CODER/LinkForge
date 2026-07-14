@@ -19,7 +19,7 @@ export class AnalyticsController {
   static async getSummary(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
-      const userId = (req as any).user?.id;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
@@ -44,7 +44,7 @@ export class AnalyticsController {
   static async getTimeseries(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
-      const userId = (req as any).user?.id;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
@@ -74,7 +74,7 @@ export class AnalyticsController {
   static async getBreakdown(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
-      const userId = (req as any).user?.id;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
@@ -104,7 +104,7 @@ export class AnalyticsController {
 
   static async getRealtime(req: Request, res: Response) {
     const linkId = String(req.params.linkId);
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
     const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
@@ -170,7 +170,7 @@ export class AnalyticsController {
   static async requestExport(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
-      const userId = (req as any).user?.id;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
@@ -186,7 +186,7 @@ export class AnalyticsController {
   static async getExportStatus(req: Request, res: Response) {
     try {
       const jobId = String(req.params.jobId);
-      const userId = (req as any).user?.id;
+      const userId = req.user?.userId;
       if (!userId) return res.status(401).json({ error: 'Unauthorized' });
 
       const job = await exportService.getExportJob(jobId);
