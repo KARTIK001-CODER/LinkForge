@@ -1,13 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { JwtService } from '../services/jwt.service';
-import { AuthRepository } from '../repositories/auth.repository';
 
 declare global {
   namespace Express {
     interface Request {
       user?: {
         userId: string;
-        id: string;
         role: string;
       };
     }
@@ -15,21 +13,19 @@ declare global {
 }
 
 export class AuthMiddleware {
-  private static authRepo = new AuthRepository();
-
   static requireAuth(req: Request, res: Response, next: NextFunction) {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'Authentication required' });
+      return res.status(401).json({ error: { code: 'AUTH_REQUIRED', message: 'Authentication required' } });
     }
 
     const token = authHeader.slice(7);
     const payload = JwtService.verifyAccessToken(token);
     if (!payload) {
-      return res.status(401).json({ error: 'Invalid or expired access token' });
+      return res.status(401).json({ error: { code: 'INVALID_TOKEN', message: 'Invalid or expired access token' } });
     }
 
-    req.user = { userId: payload.userId, id: payload.userId, role: payload.role };
+    req.user = { userId: payload.userId, role: payload.role };
     next();
   }
 
@@ -39,7 +35,7 @@ export class AuthMiddleware {
       const token = authHeader.slice(7);
       const payload = JwtService.verifyAccessToken(token);
       if (payload) {
-        req.user = { userId: payload.userId, id: payload.userId, role: payload.role };
+        req.user = { userId: payload.userId, role: payload.role };
       }
     }
     next();

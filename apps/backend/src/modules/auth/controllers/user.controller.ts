@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
 import { AuthRepository } from '../repositories/auth.repository';
-import { AppError } from '../services/auth.service';
 import { updateProfileSchema } from '../validators/auth.validator';
-import { z } from 'zod';
+import { handleControllerError } from '../../../lib/error-handler';
 
 const authRepo = new AuthRepository();
 
@@ -25,8 +24,8 @@ export class UserController {
         createdAt: user.createdAt,
         lastLoginAt: user.lastLoginAt,
       });
-    } catch {
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'User GetProfile');
     }
   }
 
@@ -52,11 +51,8 @@ export class UserController {
         isVerified: updated.isVerified,
         avatarUrl: updated.avatarUrl,
       });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'User UpdateProfile');
     }
   }
 
@@ -77,8 +73,8 @@ export class UserController {
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
       });
-    } catch {
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'User GetMe');
     }
   }
 }
