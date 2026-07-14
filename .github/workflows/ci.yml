@@ -33,6 +33,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
       - run: npm run build:backend
       - run: npm run build:frontend
 
@@ -93,6 +95,8 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - run: npx prisma validate --schema=apps/backend/prisma/schema.prisma
+        env:
+          DATABASE_URL: "postgresql://dummy:dummy@localhost:5432/dummy"
 
   docker-build:
     name: Docker Build
