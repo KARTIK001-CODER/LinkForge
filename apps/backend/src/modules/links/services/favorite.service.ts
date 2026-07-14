@@ -4,8 +4,8 @@ import { SmartLink } from '../models/link.domain';
 export class FavoriteService {
   constructor(private readonly linkRepository: LinkRepository = new LinkRepository()) {}
 
-  async toggleFavorite(id: string, isFavorite: boolean): Promise<SmartLink> {
-    const existingLink = await this.linkRepository.findById(id);
+  async toggleFavorite(id: string, isFavorite: boolean, userId?: string): Promise<SmartLink> {
+    const existingLink = await this.linkRepository.findById(id, userId);
     
     if (!existingLink) {
       const error = new Error('Link not found');
@@ -23,6 +23,6 @@ export class FavoriteService {
       return existingLink; // Idempotent
     }
 
-    return this.linkRepository.update(id, { isFavorite });
+    return this.linkRepository.update(id, { isFavorite }, userId);
   }
 }

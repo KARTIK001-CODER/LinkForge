@@ -19,6 +19,12 @@ export const getLink = async (req: Request, res: Response) => {
       return;
     }
 
+    // Verify ownership
+    if (data.userId !== (req as any).user?.id) {
+      res.status(404).json({ success: false, message: 'Link not found' });
+      return;
+    }
+
     if (data.status === 'DELETED') {
       res.status(410).json({ success: false, message: 'This link is no longer available' });
       return;

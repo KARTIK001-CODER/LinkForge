@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export const useArchiveLink = (id: string) => {
@@ -5,16 +6,8 @@ export const useArchiveLink = (id: string) => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await fetch(`http://localhost:4000/api/v1/links/${id}/archive`, {
-        method: 'PATCH',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to archive link');
-      }
-
-      return response.json();
+      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}/archive`);
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['links'] });

@@ -6,10 +6,9 @@ const lifecycleService = new LifecycleService();
 export const archiveLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
-    
-    const archivedLink = await lifecycleService.archive(id);
+    const archivedLink = await lifecycleService.archive(id, userId);
     
     res.status(200).json({
       status: 'success',
@@ -23,10 +22,9 @@ export const archiveLink = async (req: Request, res: Response): Promise<void> =>
 export const restoreLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
-    
-    const restoredLink = await lifecycleService.restore(id);
+    const restoredLink = await lifecycleService.restore(id, userId);
     
     res.status(200).json({
       status: 'success',
@@ -40,10 +38,9 @@ export const restoreLink = async (req: Request, res: Response): Promise<void> =>
 export const deleteLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
-    
-    await lifecycleService.delete(id);
+    await lifecycleService.delete(id, userId);
     
     res.status(200).json({
       success: true,

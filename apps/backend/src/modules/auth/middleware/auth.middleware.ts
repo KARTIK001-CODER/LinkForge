@@ -7,6 +7,7 @@ declare global {
     interface Request {
       user?: {
         userId: string;
+        id: string;
         role: string;
       };
     }
@@ -28,7 +29,7 @@ export class AuthMiddleware {
       return res.status(401).json({ error: 'Invalid or expired access token' });
     }
 
-    req.user = { userId: payload.userId, role: payload.role };
+    req.user = { userId: payload.userId, id: payload.userId, role: payload.role };
     next();
   }
 
@@ -38,7 +39,7 @@ export class AuthMiddleware {
       const token = authHeader.slice(7);
       const payload = JwtService.verifyAccessToken(token);
       if (payload) {
-        req.user = { userId: payload.userId, role: payload.role };
+        req.user = { userId: payload.userId, id: payload.userId, role: payload.role };
       }
     }
     next();

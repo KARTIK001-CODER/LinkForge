@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 
 interface GetLinksParams {
@@ -55,12 +56,10 @@ export const useGetLinks = (params: GetLinksParams) => {
         }
       });
 
-      const response = await fetch(url.toString());
-      if (!response.ok) {
-        throw new Error('Failed to fetch links');
-      }
+      const response = await axios.get(url.toString());
+      
 
-      return response.json();
+      return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutes cache
   });

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GetLinksResponse } from './useGetLinks';
 
@@ -7,16 +8,8 @@ export const useToggleFavorite = (id: string) => {
   return useMutation({
     mutationFn: async (isFavorite: boolean) => {
       const endpoint = isFavorite ? 'favorite' : 'unfavorite';
-      const response = await fetch(`http://localhost:4000/api/v1/links/${id}/${endpoint}`, {
-        method: 'PATCH',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to toggle favorite');
-      }
-
-      return response.json();
+      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}/${endpoint}`);
+      return response.data;
     },
     onMutate: async (isFavorite) => {
       // Cancel any outgoing refetches so they don't overwrite our optimistic update

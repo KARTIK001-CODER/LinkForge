@@ -9,7 +9,7 @@ const createLinkService = new CreateLinkService();
 export const createLink = async (req: Request, res: Response) => {
   try {
     const data = createLinkSchema.parse(req.body);
-    const link = await createLinkService.execute(data);
+    const link = await createLinkService.execute(data, (req as any).user?.id);
 
     res.status(201).json({
       success: true,

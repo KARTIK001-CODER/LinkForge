@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export interface EditLinkPayload {
@@ -13,20 +14,11 @@ export const useEditLink = (id: string) => {
 
   return useMutation({
     mutationFn: async (payload: EditLinkPayload) => {
-      const response = await fetch(`http://localhost:4000/api/v1/links/${id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}`, payload);
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to edit link');
-      }
+      
 
-      return response.json();
+      return response.data;
     },
     onSuccess: () => {
       // Invalidate the links list so it refreshes with updated data
