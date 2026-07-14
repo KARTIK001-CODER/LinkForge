@@ -1,0 +1,102 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run lint --workspace=apps/frontend
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
+      - run: npm run build:backend
+      - run: npm run build:frontend
+
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: linkforge_test
+          POSTGRES_USER: linkforge
+          POSTGRES_PASSWORD: linkforge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U linkforge
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma generate --schema=apps/backend/prisma/schema.prisma
+      - run: npx prisma migrate deploy --schema=apps/backend/prisma/schema.prisma
+        env:
+          DATABASE_URL: "postgresql://linkforge:linkforge@localhost:5432/linkforge_test"
+      - run: npm test --workspace=apps/backend
+        env:
+          DATABASE_URL: "postgresql://linkforge:linkforge@localhost:5432/linkforge_test"
+          REDIS_URL: "redis://localhost:6379"
+          JWT_ACCESS_SECRET: "test-access-secret-that-is-at-least-32-chars-long-for-testing"
+          JWT_REFRESH_SECRET: "test-refresh-secret-that-is-at-least-32-chars-long-for-testing"
+          ANALYTICS_SALT: "test-salt-for-testing"
+          NODE_ENV: test
+
+  prisma-validate:
+    name: Prisma Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npx prisma validate --schema=apps/backend/prisma/schema.prisma
+
+  docker-build:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t linkforge-backend .
