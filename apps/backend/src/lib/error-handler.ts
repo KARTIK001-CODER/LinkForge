@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { z } from 'zod';
 import { AppError } from './app-error';
+import logger from './logger';
 
 export function handleControllerError(res: Response, error: unknown, context?: string): void {
   if (error instanceof z.ZodError) {
@@ -31,11 +32,7 @@ export function handleControllerError(res: Response, error: unknown, context?: s
     }
   }
 
-  if (context) {
-    console.error(`[${context}]`, error);
-  } else {
-    console.error(error);
-  }
+  logger.error({ err: error, context }, 'Unhandled controller error');
 
   res.status(500).json({
     success: false,

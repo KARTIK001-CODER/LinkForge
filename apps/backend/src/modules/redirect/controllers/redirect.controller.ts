@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { RedirectService } from '../services/redirect.service';
 import { RedirectStatus } from '../models/redirect.domain';
 import { AnalyticsProducer } from '../../analytics/services/analytics.producer';
+import logger from '../../../lib/logger';
 
 const redirectService = new RedirectService();
 
@@ -37,7 +38,7 @@ export class RedirectController {
             });
           }
 
-          console.log(`[Redirect] Alias: ${shortCode}, Latency: ${redirectDuration}ms`);
+          logger.info({ alias: shortCode, redirectDuration }, 'Redirect completed');
           return res.redirect(302, result.destinationUrl!);
 
         case RedirectStatus.NOT_FOUND:
@@ -62,7 +63,7 @@ export class RedirectController {
           return res.redirect(302, `${frontendUrl}/error/not-found`);
       }
     } catch (error: any) {
-      console.error('[Redirect Error]', error);
+      logger.error({ err: error, shortCode: req.params.shortCode }, 'Redirect error');
       if (error.name === 'ServiceUnavailableError') {
         return res.status(503).send('Service Unavailable');
       }
