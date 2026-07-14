@@ -8,18 +8,17 @@ interface TrafficVariant {
   weight: number;
 }
 
-export function TrafficManager({ linkId, initialVariants }: { linkId: string, initialVariants?: TrafficVariant[] | null }) {
+export function TrafficManager({ linkId, initialVariants }: { linkId: string; initialVariants?: TrafficVariant[] | null }) {
   const queryClient = useQueryClient();
   const [variants, setVariants] = useState<TrafficVariant[]>(
-    initialVariants && initialVariants.length > 0 
-      ? initialVariants 
-      : [{ url: '', weight: 50 }, { url: '', weight: 50 }]
+    initialVariants && initialVariants.length > 0
+      ? initialVariants
+      : [{ url: '', weight: 50 }, { url: '', weight: 50 }],
   );
-  
+
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync state if external data changes
   useEffect(() => {
     if (initialVariants && initialVariants.length > 0) {
       setVariants(initialVariants);
@@ -28,33 +27,27 @@ export function TrafficManager({ linkId, initialVariants }: { linkId: string, in
 
   const updateVariants = useMutation({
     mutationFn: async (data: TrafficVariant[]) => {
-      const res = await fetch(`/api/v1/links/${linkId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trafficVariants: data })
-      });
-      
-      return response.data;
+      const res = await axios.patch(`/api/v1/links/${linkId}`, { trafficVariants: data });
+      return res.data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['link', linkId] }); // Assuming parent query key is ['link', alias] or id
+      queryClient.invalidateQueries({ queryKey: ['link'] });
       setIsEditing(false);
       setError(null);
     },
-    onError: (err: any) => {
-      setError(err.message);
-    }
+    onError: (err: unknown) => {
+      setError(err instanceof Error ? err.message : 'Failed to update variants');
+    },
   });
 
   const handleWeightChange = (index: number, newWeight: number) => {
     if (newWeight < 1 || newWeight > 99) return;
-    
-    // Auto-balance the other variant (since we strictly support 2 variants for V1)
+
     const newVariants = [...variants];
     newVariants[index].weight = newWeight;
     const otherIndex = index === 0 ? 1 : 0;
     newVariants[otherIndex].weight = 100 - newWeight;
-    
+
     setVariants(newVariants);
   };
 
@@ -77,7 +70,7 @@ export function TrafficManager({ linkId, initialVariants }: { linkId: string, in
       <div className="flex justify-between items-center mb-6">
         <div>
           <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center">
-            <Percent className="w-5 h-5 mr-2 text-purple-500" /> 
+            <Percent className="w-5 h-5 mr-2 text-purple-500" />
             Traffic Distribution
           </h3>
           <p className="text-sm text-gray-500 mt-1">Split traffic for A/B testing and rollouts.</p>
@@ -110,7 +103,7 @@ export function TrafficManager({ linkId, initialVariants }: { linkId: string, in
           <div className="bg-purple-50 rounded p-4 text-xs text-purple-800">
             <strong>Note:</strong> Traffic is split deterministically using the visitor's IP and Device. The same user will always see the same variant.
           </div>
-          
+
           <div className="grid grid-cols-12 gap-4 items-center">
             <div className="col-span-12 sm:col-span-9">
               <label className="block text-xs font-medium text-gray-700 mb-1">Variant A URL</label>

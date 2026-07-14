@@ -4,7 +4,7 @@ import { useGetLink } from '../features/links/api/useGetLink';
 import { LinkMetadataCard } from '../features/links/components/LinkMetadataCard';
 import { LinkQuickStats } from '../features/links/components/LinkQuickStats';
 import { QRCodeModal } from '../features/links/components/QRCodeModal';
-import { ArrowLeft, Copy, QrCode, ExternalLink, Link2, AlertTriangle, Activity } from 'lucide-react';
+import { ArrowLeft, Copy, QrCode, Link2, AlertTriangle, Activity } from 'lucide-react';
 import { FavoriteButton } from '../features/links/components/FavoriteButton';
 import { RulesManager } from '../features/links/components/RulesManager';
 import { TrafficManager } from '../features/links/components/TrafficManager';

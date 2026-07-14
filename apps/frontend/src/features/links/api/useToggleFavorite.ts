@@ -8,7 +8,7 @@ export const useToggleFavorite = (id: string) => {
   return useMutation({
     mutationFn: async (isFavorite: boolean) => {
       const endpoint = isFavorite ? 'favorite' : 'unfavorite';
-      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}/${endpoint}`);
+      const response = await axios.patch(`/api/v1/links/${id}/${endpoint}`);
       return response.data;
     },
     onMutate: async (isFavorite) => {
@@ -51,7 +51,7 @@ export const useToggleFavorite = (id: string) => {
       return { previousLinks, previousLink };
     },
     // If the mutation fails, use the context returned from onMutate to roll back
-    onError: (err, newTodo, context: any) => {
+    onError: (_err, _newTodo, context: any) => {
       if (context?.previousLinks) {
         queryClient.setQueriesData({ queryKey: ['links'] }, context.previousLinks);
       }

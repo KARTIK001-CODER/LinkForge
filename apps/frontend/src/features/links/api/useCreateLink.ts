@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 export interface CreateLinkPayload {
   destinationUrl: string;
@@ -10,13 +10,16 @@ export interface CreateLinkPayload {
 }
 
 export const useCreateLink = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: async (payload: CreateLinkPayload) => {
       const response = await axios.post('http://localhost:4000/api/v1/links', payload);
 
-      
-
       return response.data;
-    }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['links'] });
+    },
   });
 };

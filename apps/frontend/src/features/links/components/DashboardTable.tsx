@@ -19,6 +19,11 @@ interface DashboardTableProps {
   onSortChange: (column: string) => void;
 }
 
+function SortIcon({ column, sortBy, sortOrder }: { column: string; sortBy: string; sortOrder: string }) {
+  if (sortBy !== column) return <span className="text-gray-300 ml-1">↕</span>;
+  return <span className="text-blue-500 ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
+}
+
 export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChange }: DashboardTableProps) {
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
   const [archivingLink, setArchivingLink] = useState<LinkItem | null>(null);
@@ -47,18 +52,13 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
     });
   };
 
-  const SortIcon = ({ column }: { column: string }) => {
-    if (sortBy !== column) return <span className="text-gray-300 ml-1">↕</span>;
-    return <span className="text-blue-500 ml-1">{sortOrder === 'asc' ? '↑' : '↓'}</span>;
-  };
-
   if (isLoading) {
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="animate-pulse flex space-x-4 p-6">
           <div className="flex-1 space-y-6 py-1">
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-4 bg-gray-200 rounded w-full"></div>
+              <div key={i} className="h-4 bg-gray-200 rounded w-full" />
             ))}
           </div>
         </div>
@@ -84,12 +84,12 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
-              <th 
-                scope="col" 
+              <th
+                scope="col"
                 className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                 onClick={() => onSortChange('alias')}
               >
-                Alias <SortIcon column="alias" />
+                Alias <SortIcon column="alias" sortBy={sortBy} sortOrder={sortOrder} />
               </th>
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider hidden md:table-cell">
                 Destination URL
@@ -100,12 +100,12 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
               <th scope="col" className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 Status
               </th>
-              <th 
-                scope="col" 
+              <th
+                scope="col"
                 className="px-6 py-4 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider cursor-pointer hover:bg-gray-100 hidden sm:table-cell"
                 onClick={() => onSortChange('createdAt')}
               >
-                Created <SortIcon column="createdAt" />
+                Created <SortIcon column="createdAt" sortBy={sortBy} sortOrder={sortOrder} />
               </th>
               <th scope="col" className="relative px-6 py-4">
                 <span className="sr-only">Actions</span>
@@ -119,7 +119,9 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                   <div className="flex items-center">
                     <FavoriteButton link={link} />
                     <Link to={`/links/${link.alias}`} className="flex items-center group-hover:text-blue-600 transition ml-2">
-                      <span className={`font-medium text-gray-900 group-hover:text-blue-600 ${link.status === 'ARCHIVED' ? 'line-through text-gray-500' : ''}`}>{link.alias}</span>
+                      <span className={`font-medium text-gray-900 group-hover:text-blue-600 ${link.status === 'ARCHIVED' ? 'line-through text-gray-500' : ''}`}>
+                        {link.alias}
+                      </span>
                       {link.hasPassword && <Lock className="w-3 h-3 text-gray-400 ml-2" />}
                     </Link>
                   </div>
@@ -128,9 +130,9 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                   </div>
                 </td>
                 <td className="px-6 py-4 hidden md:table-cell">
-                  <a 
-                    href={link.destinationUrl} 
-                    target="_blank" 
+                  <a
+                    href={link.destinationUrl}
+                    target="_blank"
                     rel="noreferrer"
                     className="text-sm text-blue-600 hover:underline flex items-center max-w-[300px] truncate"
                     title={link.destinationUrl}
@@ -155,8 +157,8 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    link.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
-                    link.status === 'EXPIRED' ? 'bg-red-100 text-red-800' : 
+                    link.status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                    link.status === 'EXPIRED' ? 'bg-red-100 text-red-800' :
                     link.status === 'ARCHIVED' ? 'bg-gray-200 text-gray-800' :
                     'bg-gray-100 text-gray-800'
                   }`}>
@@ -169,14 +171,14 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                   {link.status !== 'ARCHIVED' ? (
                     <>
-                      <button 
+                      <button
                         onClick={() => setEditingLink(link)}
                         className="text-gray-400 hover:text-blue-600 mr-2 transition-colors"
                         title="Edit Link"
                       >
                         <Edit2 className="w-4 h-4 inline" />
                       </button>
-                      <button 
+                      <button
                         onClick={() => setArchivingLink(link)}
                         className="text-gray-400 hover:text-orange-600 mr-2 transition-colors"
                         title="Archive Link"
@@ -185,7 +187,7 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                       </button>
                     </>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => setRestoringLink(link)}
                       className="text-gray-400 hover:text-green-600 mr-2 transition-colors"
                       title="Restore Link"
@@ -193,7 +195,7 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
                       <RefreshCw className="w-4 h-4 inline" />
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => setDeletingLink(link)}
                     className="text-gray-400 hover:text-red-600 transition-colors"
                     title="Delete Link"
@@ -208,10 +210,10 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
       </div>
 
       {editingLink && (
-        <EditLinkModal 
-          isOpen={true} 
-          onClose={() => setEditingLink(null)} 
-          link={editingLink} 
+        <EditLinkModal
+          isOpen={true}
+          onClose={() => setEditingLink(null)}
+          link={editingLink}
         />
       )}
 
@@ -240,7 +242,7 @@ export function DashboardTable({ links, isLoading, sortBy, sortOrder, onSortChan
         onClose={() => setDeletingLink(null)}
         onConfirm={handleDelete}
         title="Delete Smart Link?"
-        message={<>This action is irreversible. The link will immediately stop working, but historical aggregate analytics will be preserved.</>}
+        message="This action is irreversible. The link will immediately stop working, but historical aggregate analytics will be preserved."
         confirmText="Delete Permanently"
         requireInputToConfirm={deletingLink?.alias}
         isDanger={true}

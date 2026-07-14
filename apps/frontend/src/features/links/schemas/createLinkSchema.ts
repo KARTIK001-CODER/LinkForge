@@ -8,7 +8,8 @@ export const createLinkSchema = z.object({
   customAlias: z.string().regex(/^[a-zA-Z0-9-]+$/, "Only letters, numbers, and hyphens are allowed").min(4).max(50).optional().or(z.literal('')),
   password: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal('')),
   expiresAt: z.string().optional().or(z.literal('')),
-  tags: z.string().optional().or(z.literal('')), // we will split tags by comma in the component
+  tags: z.string().optional().or(z.literal('')),
+  collectionId: z.string().optional().or(z.literal('')),
 });
 
 export type CreateLinkFormData = z.infer<typeof createLinkSchema>;
