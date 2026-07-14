@@ -1,40 +1,55 @@
 import app from './app';
 import { AnalyticsWorker } from './modules/analytics/services/analytics.worker';
+import logger from './lib/logger';
+
+const REQUIRED_ENV_VARS = [
+  'DATABASE_URL',
+  'REDIS_URL',
+  'JWT_ACCESS_SECRET',
+  'JWT_REFRESH_SECRET',
+  'ANALYTICS_SALT',
+] as const;
+
+for (const envVar of REQUIRED_ENV_VARS) {
+  if (!process.env[envVar]) {
+    throw new Error(`${envVar} environment variable is required`);
+  }
+}
 
 const PORT = process.env.PORT || 4000;
 
 process.on('unhandledRejection', (reason) => {
-  console.error('[Server] Unhandled Rejection:', reason);
+  logger.error({ err: reason }, 'Unhandled rejection');
 });
 
 process.on('uncaughtException', (error) => {
-  console.error('[Server] Uncaught Exception:', error);
+  logger.fatal({ err: error }, 'Uncaught exception');
   process.exit(1);
 });
 
 const analyticsWorker = new AnalyticsWorker();
 
 const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  analyticsWorker.start().catch((err) => console.error('[Server] Worker start failed:', err));
+  logger.info({ port: PORT }, 'Server started');
+  analyticsWorker.start().catch((err) => logger.error({ err }, 'Worker start failed'));
 });
 
 const shutdown = async (signal: string) => {
-  console.log(`[Server] Received ${signal}, shutting down gracefully...`);
+  logger.info({ signal }, 'Shutting down gracefully');
   analyticsWorker.stop();
   server.close(async () => {
-    console.log('[Server] HTTP server closed');
+    logger.info('HTTP server closed');
     try {
       const prisma = (await import('./lib/prisma')).default;
       await prisma.$disconnect();
-      console.log('[Server] Prisma disconnected');
+      logger.info('Prisma disconnected');
     } catch (e) {
-      console.error('[Server] Prisma disconnect error', e);
+      logger.error({ err: e }, 'Prisma disconnect error');
     }
     process.exit(0);
   });
   setTimeout(() => {
-    console.error('[Server] Forced shutdown after timeout');
+    logger.error('Forced shutdown after timeout');
     process.exit(1);
   }, 10000);
 };
