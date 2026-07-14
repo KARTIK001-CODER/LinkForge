@@ -11,8 +11,6 @@ import type { RegisterDto, LoginDto } from '../validators/auth.validator';
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MINUTES = 15;
 
-export { AppError };
-
 export class AuthService {
   private authRepo: AuthRepository;
   private emailService: EmailService;

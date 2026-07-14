@@ -35,10 +35,9 @@ export class RedirectService {
 
     if (link.passwordHash) {
       let isTokenValid = false;
-      if (token) {
+      if (token && process.env.JWT_ACCESS_SECRET) {
         try {
-          const secret = process.env.JWT_ACCESS_SECRET || 'fallback_secret_for_local_dev';
-          const decoded = jwt.verify(token, secret) as { alias: string };
+          const decoded = jwt.verify(token, process.env.JWT_ACCESS_SECRET) as { alias: string };
           if (decoded.alias === alias) {
             isTokenValid = true;
           }

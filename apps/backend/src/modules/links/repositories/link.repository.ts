@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../../lib/prisma';
 import type { SmartLink } from '../models/link.domain';
 import { AliasConflictError } from '../models/link.domain';
@@ -91,7 +92,7 @@ export class LinkRepository {
   }): Promise<{ items: SmartLink[]; totalItems: number }> {
     const { skip, take, search, status, tags, isFavorite, collectionId, sortBy, sortOrder, userId } = params;
 
-    const where: Record<string, unknown> = {};
+    const where: Prisma.SmartLinkFindManyArgs['where'] = {};
 
     if (userId) {
       where.userId = userId;

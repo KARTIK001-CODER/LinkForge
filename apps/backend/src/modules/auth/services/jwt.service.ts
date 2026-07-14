@@ -3,11 +3,11 @@ import jwt from 'jsonwebtoken';
 const ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_SECRET;
 const REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_SECRET;
 
-if (!ACCESS_TOKEN_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_ACCESS_SECRET environment variable is required in production');
+if (!ACCESS_TOKEN_SECRET) {
+  throw new Error('JWT_ACCESS_SECRET environment variable is required');
 }
-if (!REFRESH_TOKEN_SECRET && process.env.NODE_ENV === 'production') {
-  throw new Error('JWT_REFRESH_SECRET environment variable is required in production');
+if (!REFRESH_TOKEN_SECRET) {
+  throw new Error('JWT_REFRESH_SECRET environment variable is required');
 }
 
 const ACCESS_TOKEN_EXPIRY = '15m';

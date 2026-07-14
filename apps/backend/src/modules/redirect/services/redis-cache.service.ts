@@ -1,16 +1,17 @@
 import Redis from 'ioredis';
 import { MetricsService } from './metrics.service';
+import logger from '../../../lib/logger';
 
 export class RedisCacheService {
   private static instance: Redis | null = null;
   private static TTL_SECONDS = 86400; // 24 hours
 
-  private static getClient(): Redis | null {
+  static getClient(): Redis | null {
     if (this.instance) return this.instance;
 
     const redisUrl = process.env.REDIS_URL;
     if (!redisUrl) {
-      console.warn('[RedisCache] REDIS_URL not configured. Running without cache.');
+      logger.warn('REDIS_URL not configured. Running without cache.');
       return null;
     }
 
@@ -30,7 +31,7 @@ export class RedisCacheService {
 
       return this.instance;
     } catch (e: any) {
-      console.warn(`[RedisCache] Initialization Failed: ${e.message}`);
+      logger.warn({ err: e }, 'RedisCache initialization failed');
       return null;
     }
   }
