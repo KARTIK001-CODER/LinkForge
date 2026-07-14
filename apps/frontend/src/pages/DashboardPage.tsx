@@ -38,7 +38,7 @@ export default function DashboardPage() {
     sortOrder,
   });
 
-  const { data: collectionData } = useGetCollection(collectionId);
+  const { data: collectionData } = useGetCollection(collectionId ?? null);
   const deleteCollection = useDeleteCollection();
 
   // Debounce search input
@@ -74,6 +74,7 @@ export default function DashboardPage() {
   const handleDeleteCollection = async () => {
     if (confirm('Are you sure you want to delete this collection? Links will not be deleted.')) {
       try {
+        if (!collectionId) return;
         await deleteCollection.mutateAsync(collectionId);
         navigate('/');
       } catch (err) {

@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import prisma from '../../../lib/prisma';
 import { AnalyticsCache } from './analytics.cache';
 
@@ -261,16 +262,16 @@ export class AnalyticsService {
       }
     }
 
-    const result = await (prisma.analyticsEvent as any).groupBy({
-      by: [dimension],
+    const result = await prisma.analyticsEvent.groupBy({
+      by: [dimension as Prisma.AnalyticsEventScalarFieldEnum],
       where: { linkId, ...dateFilter, [dimension]: { not: null } },
-      _count: { [dimension]: true },
-      orderBy: { _count: { [dimension]: 'desc' } },
+      _count: { [dimension as Prisma.AnalyticsEventScalarFieldEnum]: true },
+      orderBy: { _count: { [dimension as Prisma.AnalyticsEventScalarFieldEnum]: 'desc' } },
       take: 10,
-    }) as any[];
+    });
 
     const items = result.map(r => ({
-      name: r[dimension] || 'Unknown',
+      name: (r as any)[dimension] || 'Unknown',
       clicks: (r._count as any)[dimension],
     }));
 

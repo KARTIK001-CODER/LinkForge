@@ -36,10 +36,6 @@ export function useAuth() {
 
 let accessToken: string | null = null;
 
-function getAccessToken(): string | null {
-  return accessToken;
-}
-
 function setAccessToken(token: string | null) {
   accessToken = token;
 }
@@ -65,7 +61,7 @@ axios.interceptors.response.use(
       originalRequest._retry = true;
       try {
         const response = await axios.post('/api/v1/auth/refresh');
-        const { accessToken: newToken, user } = response.data;
+        const { accessToken: newToken } = response.data;
         setAccessToken(newToken);
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return axios(originalRequest);
