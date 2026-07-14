@@ -8,7 +8,7 @@ const collectionService = new CollectionService();
 export const createCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const data = createCollectionSchema.parse(req.body);
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     const collection = await collectionService.create(data, userId);
     res.status(201).json({ success: true, data: collection });
   } catch (error: any) {
@@ -27,7 +27,7 @@ export const createCollection = async (req: Request, res: Response): Promise<voi
 
 export const getCollections = async (req: Request, res: Response): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     const collections = await collectionService.findAll(userId);
     res.status(200).json({ success: true, data: collections });
   } catch (error: any) {
@@ -39,7 +39,7 @@ export const getCollections = async (req: Request, res: Response): Promise<void>
 export const getCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     const collection = await collectionService.findById(id, userId);
     res.status(200).json({ success: true, data: collection });
   } catch (error: any) {
@@ -55,7 +55,7 @@ export const getCollection = async (req: Request, res: Response): Promise<void> 
 export const updateCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     const data = updateCollectionSchema.parse(req.body);
     const collection = await collectionService.update(id, data, userId);
     res.status(200).json({ success: true, data: collection });
@@ -80,7 +80,7 @@ export const updateCollection = async (req: Request, res: Response): Promise<voi
 export const deleteCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const userId = (req as any).user?.id;
+    const userId = req.user?.userId;
     await collectionService.delete(id, userId);
     res.status(200).json({ success: true, message: 'Collection deleted successfully' });
   } catch (error: any) {
