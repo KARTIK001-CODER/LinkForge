@@ -1,0 +1,11 @@
+node_modules
+.git
+.env
+.env.local
+.gitignore
+*.md
+.vite
+dist
+apps/frontend
+refactor_fetch.js
+refactor_fetch2.js
