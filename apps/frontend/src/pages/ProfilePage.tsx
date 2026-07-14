@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../features/auth/api/auth';
-import { Link, User, Save, AlertCircle, CheckCircle } from 'lucide-react';
+import { Save, AlertCircle, CheckCircle } from 'lucide-react';
 import axios from 'axios';
 
 export default function ProfilePage() {

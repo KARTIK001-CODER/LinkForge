@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
 
 export interface AuthUser {
@@ -56,7 +56,12 @@ axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry && originalRequest.url !== '/api/v1/auth/refresh') {
+    if (
+      error.response?.status === 401 &&
+      !originalRequest._retry &&
+      !originalRequest.url?.includes('/api/v1/auth/refresh') &&
+      !originalRequest.url?.includes('/api/v1/auth/login')
+    ) {
       originalRequest._retry = true;
       try {
         const response = await axios.post('/api/v1/auth/refresh');
@@ -71,10 +76,10 @@ axios.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -114,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await axios.post('/api/v1/auth/logout');
     } catch {
+      // ignore
     } finally {
       setAccessToken(null);
       setUser(null);
@@ -124,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await axios.post('/api/v1/auth/logout-all');
     } catch {
+      // ignore
     } finally {
       setAccessToken(null);
       setUser(null);
