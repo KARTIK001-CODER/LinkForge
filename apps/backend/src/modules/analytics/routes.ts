@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { AnalyticsController } from './controllers/analytics.controller';
-
 import { AuthMiddleware } from '../auth/middleware/auth.middleware';
 
 const router = Router();
 
+router.get('/diagnostics', AnalyticsController.getDiagnostics);
 router.get('/:linkId/summary', AuthMiddleware.requireAuth, AnalyticsController.getSummary);
 router.get('/:linkId/timeseries', AuthMiddleware.requireAuth, AnalyticsController.getTimeseries);
 router.get('/:linkId/breakdown', AuthMiddleware.requireAuth, AnalyticsController.getBreakdown);
