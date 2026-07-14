@@ -96,6 +96,7 @@ export class AnalyticsWorker {
           if (payloadIdx !== -1) {
             try {
               const event: RawAnalyticsEvent = JSON.parse(fields[payloadIdx + 1]);
+              event.timestamp = new Date(event.timestamp);
               batch.push({ event, messageId });
             } catch (err: any) {
               console.error(`[AnalyticsWorker] Invalid JSON in message ${messageId}:`, err.message);
