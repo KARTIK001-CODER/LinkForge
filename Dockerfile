@@ -3,6 +3,7 @@ WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY apps/backend/package.json apps/backend/package.json
+COPY apps/frontend/package.json apps/frontend/package.json
 RUN npm ci
 
 COPY apps/backend/prisma apps/backend/prisma
@@ -19,7 +20,6 @@ RUN apk add --no-cache tini
 
 COPY --from=builder /app/apps/backend/dist ./dist
 COPY --from=builder /app/apps/backend/prisma ./prisma
-COPY --from=builder /app/apps/backend/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./package.json
 

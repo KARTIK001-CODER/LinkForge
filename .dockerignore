@@ -6,6 +6,7 @@ node_modules
 *.md
 .vite
 dist
-apps/frontend
+apps/frontend/*
+!apps/frontend/package.json
 refactor_fetch.js
 refactor_fetch2.js
