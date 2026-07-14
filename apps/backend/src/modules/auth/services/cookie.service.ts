@@ -2,7 +2,7 @@ import { Response } from 'express';
 
 const COOKIE_NAME = 'linkforge_refresh_token';
 const SECURE = process.env.NODE_ENV === 'production';
-const SAME_SITE = 'lax' as const;
+const SAME_SITE = process.env.NODE_ENV === 'production' ? 'none' : 'lax';
 const PATH = '/api/v1/auth';
 
 export class CookieService {

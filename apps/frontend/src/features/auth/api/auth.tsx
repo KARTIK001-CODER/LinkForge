@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from 'react';
 import axios from 'axios';
+import { useQueryClient } from '@tanstack/react-query';
 
 export interface AuthUser {
   id: string;
@@ -78,6 +79,7 @@ axios.interceptors.response.use(
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
 
   const refreshSession = useCallback(async () => {
     try {
@@ -102,14 +104,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { user: userData, accessToken: newToken } = response.data;
     setAccessToken(newToken);
     setUser(userData);
-  }, []);
+    queryClient.resetQueries();
+  }, [queryClient]);
 
   const register = useCallback(async (data: { email: string; username: string; password: string; displayName?: string }) => {
     const response = await axios.post('/api/v1/auth/register', data);
     const { user: userData, accessToken: newToken } = response.data;
     setAccessToken(newToken);
     setUser(userData);
-  }, []);
+    queryClient.resetQueries();
+  }, [queryClient]);
 
   const logout = useCallback(async () => {
     try {
@@ -119,8 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setAccessToken(null);
       setUser(null);
+      queryClient.resetQueries();
     }
-  }, []);
+  }, [queryClient]);
 
   const logoutAll = useCallback(async () => {
     try {
@@ -130,8 +135,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setAccessToken(null);
       setUser(null);
+      queryClient.resetQueries();
     }
-  }, []);
+  }, [queryClient]);
 
   return (
     <AuthContext.Provider value={{
