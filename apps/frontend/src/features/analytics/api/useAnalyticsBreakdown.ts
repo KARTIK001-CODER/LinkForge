@@ -6,7 +6,7 @@ export interface BreakdownData {
   clicks: number;
 }
 
-export const useAnalyticsBreakdown = (linkId: string, dimension: string) => {
+export const useAnalyticsBreakdown = (linkId: string, dimension: string, isRealtime?: boolean) => {
   return useQuery<{ dimension: string; data: BreakdownData[] }>({
     queryKey: ['analytics', linkId, 'breakdown', dimension],
     queryFn: async () => {
@@ -14,6 +14,8 @@ export const useAnalyticsBreakdown = (linkId: string, dimension: string) => {
       return response.data;
     },
     enabled: !!linkId && !!dimension,
-    staleTime: 60_000,
+    staleTime: isRealtime ? 15_000 : 60_000,
+    refetchInterval: isRealtime ? 30_000 : false,
+    refetchOnWindowFocus: true,
   });
 };

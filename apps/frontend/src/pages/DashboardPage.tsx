@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useGetLinks } from '../features/links/api/useGetLinks';
 import { DashboardTable } from '../features/links/components/DashboardTable';
-import { Search, Filter, Folder, Settings, Trash, Edit2 } from 'lucide-react';
+import { Search, Filter, Folder, Trash, Edit2 } from 'lucide-react';
 import { useGetCollection } from '../features/collections/api/useGetCollection';
 import { useDeleteCollection } from '../features/collections/api/useDeleteCollection';
 import { CollectionModal } from '../features/collections/components/CollectionModal';
@@ -21,7 +21,7 @@ export default function DashboardPage() {
   const sortOrder = searchParams.get('sortOrder') || 'desc';
 
   const isFavorite = searchParams.get('isFavorite') || '';
-  const collectionId = searchParams.get('collectionId') || '';
+  const collectionId = searchParams.get('collectionId') || undefined;
 
   const [searchInput, setSearchInput] = useState(search);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -127,7 +127,7 @@ export default function DashboardPage() {
           <select
             value={status}
             onChange={(e) => updateParams({ status: e.target.value, page: '1' })}
-            className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none bg-white text-gray-700"
+            className="pl-3 pr-8 py-2 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none"
           >
             <option value="">All Statuses (excluding Archived)</option>
             <option value="ACTIVE">Active</option>

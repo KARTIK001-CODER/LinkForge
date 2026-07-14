@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useAnalyticsSummary } from '../api/useAnalyticsSummary';
 import { useAnalyticsTimeseries } from '../api/useAnalyticsTimeseries';
 import { useAnalyticsBreakdown } from '../api/useAnalyticsBreakdown';
@@ -16,17 +16,51 @@ interface AnalyticsDashboardProps {
 export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ linkId }) => {
   const [exportStatus, setExportStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [isRealtime, setIsRealtime] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
-  // Using React Query hooks to fetch data
-  const { data: summary, isLoading: isLoadingSummary } = useAnalyticsSummary(linkId);
-  const { data: timeseriesData, isLoading: isLoadingTimeseries } = useAnalyticsTimeseries(linkId);
-  
-  const { data: countryBreakdown, isLoading: isLoadingCountry } = useAnalyticsBreakdown(linkId, 'country');
-  const { data: browserBreakdown, isLoading: isLoadingBrowser } = useAnalyticsBreakdown(linkId, 'browser');
-  const { data: deviceBreakdown, isLoading: isLoadingDevice } = useAnalyticsBreakdown(linkId, 'deviceType');
-  const { data: referrerBreakdown, isLoading: isLoadingReferrer } = useAnalyticsBreakdown(linkId, 'referrer');
+  const { data: summary, isLoading: isLoadingSummary, refetch: refetchSummary } = useAnalyticsSummary(linkId, isRealtime);
+  const { data: timeseriesData, isLoading: isLoadingTimeseries } = useAnalyticsTimeseries(linkId, undefined, undefined, isRealtime);
+  const { data: countryBreakdown, isLoading: isLoadingCountry } = useAnalyticsBreakdown(linkId, 'country', isRealtime);
+  const { data: browserBreakdown, isLoading: isLoadingBrowser } = useAnalyticsBreakdown(linkId, 'browser', isRealtime);
+  const { data: deviceBreakdown, isLoading: isLoadingDevice } = useAnalyticsBreakdown(linkId, 'deviceType', isRealtime);
+  const { data: referrerBreakdown, isLoading: isLoadingReferrer } = useAnalyticsBreakdown(linkId, 'referrer', isRealtime);
 
-  const handleExport = async () => {
+  useEffect(() => {
+    if (!isRealtime) {
+      if (eventSourceRef.current) {
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+      return;
+    }
+
+    const es = new EventSource(`/api/v1/analytics/links/${linkId}/realtime`);
+    eventSourceRef.current = es;
+
+    es.onmessage = (event) => {
+      try {
+        const parsed = JSON.parse(event.data);
+        if (parsed.type === 'summary') {
+          refetchSummary();
+        }
+      } catch {}
+    };
+
+    es.addEventListener('summary', () => {
+      refetchSummary();
+    });
+
+    es.onerror = () => {
+      // Will auto-reconnect
+    };
+
+    return () => {
+      es.close();
+      eventSourceRef.current = null;
+    };
+  }, [isRealtime, linkId, refetchSummary]);
+
+  const handleExport = useCallback(async () => {
     try {
       setExportStatus('loading');
       const res = await axios.post(`/api/v1/analytics/links/${linkId}/export`);
@@ -37,7 +71,11 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ linkId }
       setExportStatus('error');
       setTimeout(() => setExportStatus('idle'), 3000);
     }
-  };
+  }, [linkId]);
+
+  const handleRealtimeToggle = useCallback(() => {
+    setIsRealtime(prev => !prev);
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -46,7 +84,7 @@ export const AnalyticsDashboard: React.FC<AnalyticsDashboardProps> = ({ linkId }
         
         <div className="flex items-center space-x-4">
           <button 
-            onClick={() => setIsRealtime(!isRealtime)}
+            onClick={handleRealtimeToggle}
             className={`flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-colors ${
               isRealtime 
                 ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
