@@ -15,6 +15,7 @@ interface GetLinksParams {
 
 export interface LinkItem {
   id: string;
+  userId?: string | null;
   alias: string;
   shortUrl: string;
   destinationUrl: string;
@@ -27,6 +28,12 @@ export interface LinkItem {
   isFavorite: boolean;
   collectionId?: string | null;
   createdAt: string;
+  trafficVariants?: TrafficVariant[] | null;
+}
+
+export interface TrafficVariant {
+  url: string;
+  weight: number;
 }
 
 export interface GetLinksResponse {
@@ -47,20 +54,9 @@ export const useGetLinks = (params: GetLinksParams) => {
   return useQuery({
     queryKey: ['links', params],
     queryFn: async (): Promise<GetLinksResponse> => {
-      const url = new URL('http://localhost:4000/api/v1/links');
-      
-      // Append valid params to query string
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-          url.searchParams.append(key, String(value));
-        }
-      });
-
-      const response = await axios.get(url.toString());
-      
-
+      const response = await axios.get('/api/v1/links', { params });
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    staleTime: 1000 * 60 * 5,
   });
 };

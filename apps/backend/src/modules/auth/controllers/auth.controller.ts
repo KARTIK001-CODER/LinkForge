@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { AuthService, AppError } from '../services/auth.service';
+import { AuthService } from '../services/auth.service';
 import { CookieService } from '../services/cookie.service';
 import {
   registerSchema,
@@ -8,7 +8,7 @@ import {
   resetPasswordSchema,
   changePasswordSchema,
 } from '../validators/auth.validator';
-import { z } from 'zod';
+import { handleControllerError } from '../../../lib/error-handler';
 
 const authService = new AuthService();
 
@@ -27,15 +27,8 @@ export class AuthController {
         accessToken: result.tokens.accessToken,
         expiresIn: result.tokens.expiresIn,
       });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
-      }
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      console.error('[Auth] Register error:', error);
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth Register');
     }
   }
 
@@ -54,15 +47,8 @@ export class AuthController {
         accessToken: result.tokens.accessToken,
         expiresIn: result.tokens.expiresIn,
       });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
-      }
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      console.error('[Auth] Login error:', error);
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth Login');
     }
   }
 
@@ -84,14 +70,9 @@ export class AuthController {
         accessToken: result.tokens.accessToken,
         expiresIn: result.tokens.expiresIn,
       });
-    } catch (error: any) {
-      if (error instanceof AppError) {
-        CookieService.clearRefreshCookie(res);
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      console.error('[Auth] Refresh error:', error);
+    } catch (error: unknown) {
       CookieService.clearRefreshCookie(res);
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+      handleControllerError(res, error, 'Auth Refresh');
     }
   }
 
@@ -115,9 +96,8 @@ export class AuthController {
       }
       CookieService.clearRefreshCookie(res);
       return res.json({ message: 'Logged out from all devices' });
-    } catch (error: any) {
-      console.error('[Auth] Logout all error:', error);
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth LogoutAll');
     }
   }
 
@@ -127,9 +107,8 @@ export class AuthController {
       const refreshToken = req.cookies?.linkforge_refresh_token;
       const sessions = await authService.getSessions(userId, refreshToken);
       return res.json({ sessions });
-    } catch (error: any) {
-      console.error('[Auth] Get sessions error:', error);
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth GetSessions');
     }
   }
 
@@ -139,11 +118,8 @@ export class AuthController {
       const sessionId = String(req.params.sessionId);
       await authService.revokeSession(userId, sessionId);
       return res.json({ message: 'Session revoked' });
-    } catch (error: any) {
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth RevokeSession');
     }
   }
 
@@ -152,9 +128,9 @@ export class AuthController {
       const data = forgotPasswordSchema.parse(req.body);
       await authService.forgotPassword(data.email);
       return res.json({ message: 'If the email exists, a reset link has been sent' });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'ZodError') {
+        return res.status(400).json({ error: (error as any).issues });
       }
       return res.json({ message: 'If the email exists, a reset link has been sent' });
     }
@@ -165,14 +141,8 @@ export class AuthController {
       const data = resetPasswordSchema.parse(req.body);
       await authService.resetPassword(data.token, data.password);
       return res.json({ message: 'Password reset successfully' });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
-      }
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth ResetPassword');
     }
   }
 
@@ -182,14 +152,8 @@ export class AuthController {
       const userId = req.user!.userId;
       await authService.changePassword(userId, data.currentPassword, data.newPassword);
       return res.json({ message: 'Password changed successfully. Please log in again.' });
-    } catch (error: any) {
-      if (error instanceof z.ZodError) {
-        return res.status(400).json({ error: error.issues });
-      }
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth ChangePassword');
     }
   }
 
@@ -201,11 +165,8 @@ export class AuthController {
       }
       await authService.verifyEmail(token);
       return res.json({ message: 'Email verified successfully' });
-    } catch (error: any) {
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth VerifyEmail');
     }
   }
 
@@ -214,11 +175,8 @@ export class AuthController {
       const userId = req.user!.userId;
       await authService.resendVerificationEmail(userId);
       return res.json({ message: 'Verification email sent' });
-    } catch (error: any) {
-      if (error instanceof AppError) {
-        return res.status(error.statusCode).json({ error: { code: error.code, message: error.message } });
-      }
-      return res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+    } catch (error: unknown) {
+      handleControllerError(res, error, 'Auth ResendVerification');
     }
   }
 }

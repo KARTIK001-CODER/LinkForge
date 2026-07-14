@@ -7,7 +7,7 @@ import { AliasConflictError, SmartLink } from '../models/link.domain';
 export class CreateLinkService {
   constructor(private readonly linkRepository: LinkRepository = new LinkRepository()) {}
 
-  async execute(dto: CreateLinkDto, userId?: string): Promise<SmartLink> {
+  async execute(dto: CreateLinkDto, userId?: string | null): Promise<SmartLink> {
     let passwordHash: string | null = null;
     if (dto.password) {
       passwordHash = await bcrypt.hash(dto.password, 10);
@@ -15,7 +15,7 @@ export class CreateLinkService {
 
     if (dto.customAlias) {
       return this.linkRepository.create({
-        userId,
+        userId: userId ?? null,
         destinationUrl: dto.destinationUrl,
         alias: dto.customAlias,
         passwordHash,
@@ -26,7 +26,6 @@ export class CreateLinkService {
       });
     }
 
-    // Generator retry loop
     let retries = 0;
     const MAX_RETRIES = 3;
 
@@ -34,7 +33,7 @@ export class CreateLinkService {
       try {
         const alias = generateAlias();
         return await this.linkRepository.create({
-          userId,
+          userId: userId ?? null,
           destinationUrl: dto.destinationUrl,
           alias,
           passwordHash,

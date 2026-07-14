@@ -7,14 +7,13 @@ interface RedirectRule {
   id: string;
   priority: number;
   destinationUrl: string;
-  conditions: any[];
+  conditions: unknown[];
 }
 
 export function RulesManager({ linkId }: { linkId: string }) {
   const queryClient = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
-  
-  // Basic form state
+
   const [destinationUrl, setDestinationUrl] = useState('');
   const [type, setType] = useState('country');
   const [operator, setOperator] = useState('eq');
@@ -24,36 +23,33 @@ export function RulesManager({ linkId }: { linkId: string }) {
     queryKey: ['rules', linkId],
     queryFn: async () => {
       const res = await axios.get(`/api/v1/links/${linkId}/rules`);
-      const json = await res.json();
-      return json.data as RedirectRule[];
-    }
+      return res.data.data as RedirectRule[];
+    },
   });
 
   const createRule = useMutation({
-    mutationFn: async (rule: any) => {
+    mutationFn: async (rule: { priority: number; destinationUrl: string; conditions: unknown[] }) => {
       const res = await axios.post(`/api/v1/links/${linkId}/rules`, rule);
-      if (!res.ok) throw new Error('Failed to create rule');
-      return response.data;
+      return res.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', linkId] });
       setIsAdding(false);
       setDestinationUrl('');
       setValue('');
-    }
+    },
   });
 
   const deleteRule = useMutation({
     mutationFn: async (ruleId: string) => {
-      const res = await axios.delete(`/api/v1/links/${linkId}/rules/${ruleId}`);
-      if (!res.ok) throw new Error('Failed to delete rule');
+      await axios.delete(`/api/v1/links/${linkId}/rules/${ruleId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', linkId] });
-    }
+    },
   });
 
-  if (isLoading) return <div className="animate-pulse h-32 bg-gray-100 rounded-lg"></div>;
+  if (isLoading) return <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />;
   if (isError) return <div className="text-red-500">Failed to load rules.</div>;
 
   const rules = data || [];
@@ -79,6 +75,8 @@ export function RulesManager({ linkId }: { linkId: string }) {
               <select value={type} onChange={e => setType(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
                 <option value="country">Country</option>
                 <option value="device">Device</option>
+                <option value="region">Region</option>
+                <option value="day_of_week">Day of Week</option>
               </select>
             </div>
             <div>
@@ -103,7 +101,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
                 createRule.mutate({
                   priority: rules.length + 1,
                   destinationUrl,
-                  conditions: [{ type, operator, value }]
+                  conditions: [{ type, operator, value }],
                 });
               }}
               disabled={!value || !destinationUrl}
@@ -119,7 +117,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
         <div className="text-center py-6 text-gray-500 text-sm">No rules configured yet.</div>
       ) : (
         <div className="space-y-3">
-          {rules.map((rule, idx) => (
+          {rules.map((rule) => (
             <div key={rule.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
               <div className="flex items-center">
                 <div className="flex flex-col items-center mr-4">
@@ -129,7 +127,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
                 </div>
                 <div>
                   <div className="flex flex-wrap gap-2 mb-1">
-                    {rule.conditions.map((c: any, i: number) => (
+                    {(rule.conditions as Array<{ type: string; operator: string; value: string }>).map((c, i) => (
                       <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {c.type} {c.operator} {c.value}
                       </span>
@@ -140,7 +138,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
                   </div>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => deleteRule.mutate(rule.id)}
                 className="p-2 text-red-500 hover:bg-red-50 rounded-md"
               >

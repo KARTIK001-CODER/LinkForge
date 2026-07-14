@@ -114,6 +114,7 @@ model SmartLink {
   rules          RedirectRule[]
 
   analyticsEvents AnalyticsEvent[]
+  hourlyMetrics   HourlyMetrics[]
   dailyMetrics    DailyMetrics[]
   monthlyMetrics  MonthlyMetrics[]
   aggregatedMetrics AggregatedMetrics[]
@@ -173,23 +174,42 @@ model VisitorSession {
 }
 
 model AnalyticsEvent {
-  id          String   @id @default(uuid())
-  linkId      String
-  link        SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
-  visitorId   String?
-  visitor     Visitor?  @relation(fields: [visitorId], references: [id], onDelete: SetNull)
-  timestamp   DateTime @default(now())
+  id              String   @id @default(uuid())
+  linkId          String
+  link            SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  alias           String?  @db.VarChar(50)
+  ownerId         String?  @db.VarChar(100)
+  sessionId       String?  @db.VarChar(100)
+  visitorId       String?
+  visitor         Visitor?  @relation(fields: [visitorId], references: [id], onDelete: SetNull)
+  timestamp       DateTime @default(now())
   
-  country     String?  @db.VarChar(50)
-  city        String?  @db.VarChar(100)
-  browser     String?  @db.VarChar(50)
-  os          String?  @db.VarChar(50)
-  deviceType  String?  @db.VarChar(50)
-  referrer    String?  @db.VarChar(255)
+  ipHash          String?  @db.VarChar(255)
+  country         String?  @db.VarChar(50)
+  region          String?  @db.VarChar(100)
+  city            String?  @db.VarChar(100)
+  timezone        String?  @db.VarChar(100)
+  language        String?  @db.VarChar(50)
   
-  utmSource   String?  @db.VarChar(100)
-  utmMedium   String?  @db.VarChar(100)
-  utmCampaign String?  @db.VarChar(100)
+  browser         String?  @db.VarChar(50)
+  browserVersion  String?  @db.VarChar(50)
+  os              String?  @db.VarChar(50)
+  osVersion       String?  @db.VarChar(50)
+  deviceType      String?  @db.VarChar(50)
+  platform        String?  @db.VarChar(50)
+  userAgent       String?  @db.VarChar(500)
+  
+  referrer        String?  @db.VarChar(255)
+  referrerUrl     String?  @db.VarChar(2048)
+  
+  utmSource       String?  @db.VarChar(100)
+  utmMedium       String?  @db.VarChar(100)
+  utmCampaign     String?  @db.VarChar(100)
+  utmContent      String?  @db.VarChar(100)
+  utmTerm         String?  @db.VarChar(100)
+  
+  redirectDuration Int?   @default(0)
+  httpStatus      Int?    @default(302)
   
   @@index([linkId, timestamp])
   @@index([linkId, country])
@@ -198,6 +218,23 @@ model AnalyticsEvent {
   @@index([linkId, deviceType])
   @@index([linkId, referrer])
   @@index([linkId, visitorId])
+  @@index([linkId, alias])
+  @@index([linkId, ownerId])
+  @@index([ownerId, timestamp])
+  @@index([timestamp])
+  @@index([visitorId, timestamp])
+}
+
+model HourlyMetrics {
+  id              String   @id @default(uuid())
+  linkId          String
+  link            SmartLink @relation(fields: [linkId], references: [id], onDelete: Cascade)
+  hour            DateTime
+  totalClicks     Int      @default(0)
+  uniqueVisitors  Int      @default(0)
+  
+  @@unique([linkId, hour])
+  @@index([linkId, hour])
 }
 
 model DailyMetrics {
@@ -209,6 +246,7 @@ model DailyMetrics {
   uniqueVisitors  Int      @default(0)
   
   @@unique([linkId, date])
+  @@index([linkId, date])
 }
 
 model MonthlyMetrics {
@@ -220,6 +258,7 @@ model MonthlyMetrics {
   uniqueVisitors  Int      @default(0)
   
   @@unique([linkId, month])
+  @@index([linkId, month])
 }
 
 model AggregatedMetrics {

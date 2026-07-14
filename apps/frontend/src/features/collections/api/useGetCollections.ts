@@ -6,7 +6,7 @@ export const useGetCollections = () => {
   return useQuery({
     queryKey: ['collections'],
     queryFn: async (): Promise<GetCollectionsResponse> => {
-      const response = await axios.get('http://localhost:4000/api/v1/collections');
+      const response = await axios.get('/api/v1/collections');
       
       return response.data;
     },

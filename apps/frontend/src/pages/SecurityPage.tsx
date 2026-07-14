@@ -13,7 +13,7 @@ interface Session {
 }
 
 export default function SecurityPage() {
-  const { user, logoutAll } = useAuth();
+  const { logoutAll } = useAuth();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(true);
 

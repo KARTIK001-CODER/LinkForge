@@ -1,13 +1,17 @@
 import bcrypt from 'bcrypt';
 import crypto from 'crypto';
+import type { User } from '@prisma/client';
 import { AuthRepository } from '../repositories/auth.repository';
 import { JwtService } from './jwt.service';
 import { EmailService } from './email.service';
+import { AppError } from '../../../lib/app-error';
 import type { AuthUser, AuthTokens, LoginResponse, SessionInfo } from '../models/auth.domain';
 import type { RegisterDto, LoginDto } from '../validators/auth.validator';
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MINUTES = 15;
+
+export { AppError };
 
 export class AuthService {
   private authRepo: AuthRepository;
@@ -68,7 +72,7 @@ export class AuthService {
     }
 
     const user = dto.email
-      ? await this.authRepo.findByEmail(identifier)
+      ? await this.authRepo.findByEmail(identifier.toLowerCase())
       : await this.authRepo.findByUsername(identifier!);
 
     if (!user) {
@@ -103,7 +107,6 @@ export class AuthService {
     }
 
     await this.authRepo.resetLoginAttempts(user.id);
-
     await this.authRepo.updateUser(user.id, { lastLoginAt: new Date() });
 
     await this.authRepo.createAuditLog({
@@ -162,7 +165,7 @@ export class AuthService {
     }
   }
 
-  async logoutAll(userId: string, currentTokenHash?: string): Promise<void> {
+  async logoutAll(userId: string): Promise<void> {
     await this.authRepo.revokeAllUserRefreshTokens(userId);
   }
 
@@ -191,7 +194,7 @@ export class AuthService {
   }
 
   async forgotPassword(email: string): Promise<void> {
-    const user = await this.authRepo.findByEmail(email);
+    const user = await this.authRepo.findByEmail(email.toLowerCase());
     if (!user) {
       return;
     }
@@ -274,7 +277,7 @@ export class AuthService {
   }
 
   private async generateAuthResponse(
-    user: any,
+    user: User,
     rememberMe: boolean,
     ipAddress?: string,
     userAgent?: string,
@@ -305,7 +308,7 @@ export class AuthService {
         email: user.email,
         username: user.username,
         displayName: user.displayName,
-        role: user.role,
+        role: user.role as 'USER' | 'ADMIN',
         isVerified: user.isVerified,
         avatarUrl: user.avatarUrl,
         createdAt: user.createdAt,
@@ -316,16 +319,5 @@ export class AuthService {
         expiresIn,
       },
     };
-  }
-}
-
-export class AppError extends Error {
-  constructor(
-    message: string,
-    public code: string,
-    public statusCode: number,
-  ) {
-    super(message);
-    this.name = 'AppError';
   }
 }

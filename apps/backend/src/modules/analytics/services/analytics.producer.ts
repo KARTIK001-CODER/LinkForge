@@ -23,14 +23,7 @@ export class AnalyticsProducer {
       });
 
       this.instance.on('error', (err: any) => {
-        if (err.message && err.message.includes('ECONNREFUSED')) {
-          if (this.droppedCount % 100 === 0) {
-            console.warn('[AnalyticsProducer] Redis connection refused');
-          }
-          this.droppedCount++;
-          return;
-        }
-        if (err.code === 'ECONNREFUSED') {
+        if (err.message?.includes('ECONNREFUSED')) {
           this.droppedCount++;
           return;
         }
@@ -52,14 +45,25 @@ export class AnalyticsProducer {
     const client = this.getClient();
     if (!client) {
       this.droppedCount++;
-      if (this.droppedCount % 100 === 1) {
-        console.warn(`[AnalyticsProducer] Dropped event #${this.droppedCount} — Redis not available`);
-      }
       return;
     }
 
+    const payload = {
+      eventId: event.eventId,
+      linkId: event.linkId,
+      alias: event.alias,
+      ownerId: event.ownerId,
+      ip: event.ip,
+      userAgent: event.userAgent,
+      timestamp: event.timestamp.toISOString(),
+      referrer: event.referrer || null,
+      originalUrl: event.originalUrl || null,
+      redirectDuration: event.redirectDuration || 0,
+      httpStatus: event.httpStatus || 302,
+    };
+
     try {
-      await client.xadd(this.STREAM_KEY, '*', 'payload', JSON.stringify(event));
+      await client.xadd(this.STREAM_KEY, '*', 'payload', JSON.stringify(payload));
     } catch (error: any) {
       this.droppedCount++;
       if (this.droppedCount % 10 === 1) {

@@ -12,10 +12,10 @@ export const useUpdateCollection = () => {
 
   return useMutation({
     mutationFn: async ({ id, ...payload }: UpdateCollectionPayload) => {
-      const response = await axios.patch(`http://localhost:4000/api/v1/collections/${id}`, payload);
+      const response = await axios.patch(`/api/v1/collections/${id}`, payload);
       return response.data;
     },
-    onSuccess: (data, variables) => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
       queryClient.invalidateQueries({ queryKey: ['collection', variables.id] });
     },

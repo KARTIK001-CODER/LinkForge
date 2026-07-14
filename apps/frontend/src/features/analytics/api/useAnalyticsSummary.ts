@@ -6,9 +6,13 @@ export interface AnalyticsSummary {
   uniqueVisitors: number;
   topReferrer: string;
   topCountry: string;
+  topBrowser: string;
+  topDevice: string;
+  totalLinks: number;
+  avgRedirectDuration: number;
 }
 
-export const useAnalyticsSummary = (linkId: string) => {
+export const useAnalyticsSummary = (linkId: string, isRealtime?: boolean) => {
   return useQuery<AnalyticsSummary>({
     queryKey: ['analytics', linkId, 'summary'],
     queryFn: async () => {
@@ -16,6 +20,8 @@ export const useAnalyticsSummary = (linkId: string) => {
       return response.data;
     },
     enabled: !!linkId,
-    staleTime: 15_000,
+    staleTime: isRealtime ? 5_000 : 15_000,
+    refetchInterval: isRealtime ? 10_000 : false,
+    refetchOnWindowFocus: true,
   });
 };
