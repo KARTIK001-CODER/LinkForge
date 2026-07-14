@@ -50,11 +50,10 @@ export class RulesEngineService {
         return false; // Unknown rule type fails gracefully
     }
 
-    let targetValue = condition.value;
-    
-    // Normalize date_time for comparison if needed
+    let targetValue: string | string[] | number = condition.value;
+
     if (condition.type === 'date_time') {
-      targetValue = new Date(condition.value as string).getTime();
+      targetValue = new Date(String(condition.value)).getTime();
     }
 
     switch (condition.operator) {

@@ -1,10 +1,11 @@
 import prisma from '../../../lib/prisma';
-import { SmartLink, AliasConflictError } from '../models/link.domain';
+import type { SmartLink } from '../models/link.domain';
+import { AliasConflictError } from '../models/link.domain';
 import { RedisCacheService } from '../../redirect/services/redis-cache.service';
-import CircuitBreaker = require('opossum');
+import CircuitBreaker from 'opossum';
 
 export class LinkRepository {
-  async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'clicks'> & { status?: string, userId?: string }): Promise<SmartLink> {
+  async create(data: Partial<Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'clicks'>> & { destinationUrl: string; alias: string; userId?: string | null }): Promise<SmartLink> {
     try {
       const link = await prisma.smartLink.create({
         data: {
@@ -15,59 +16,62 @@ export class LinkRepository {
           startsAt: data.startsAt,
           expiresAt: data.expiresAt,
           fallbackUrl: data.fallbackUrl,
-          tags: data.tags ? data.tags : [],
+          tags: data.tags ?? [],
           collectionId: data.collectionId,
         },
       });
       return link as SmartLink;
-    } catch (error: any) {
-      if (error.code === 'P2002' && error.meta?.target?.includes('alias')) {
-        throw new AliasConflictError();
+    } catch (error: unknown) {
+      if (typeof error === 'object' && error !== null && 'code' in error) {
+        const prismaError = error as { code: string; meta?: { target?: string[] } };
+        if (prismaError.code === 'P2002' && prismaError.meta?.target?.includes('alias')) {
+          throw new AliasConflictError();
+        }
       }
       throw error;
     }
   }
 
   private static findUniqueBreaker = new CircuitBreaker(async (alias: string) => {
-    return prisma.smartLink.findUnique({ 
+    return prisma.smartLink.findUnique({
       where: { alias },
       include: {
         rules: {
-          orderBy: { priority: 'asc' }
-        }
-      }
+          orderBy: { priority: 'asc' },
+        },
+      },
     });
   }, {
-    timeout: 60000, // 60000ms max to allow for incredibly slow Neon Serverless DB cold starts
-    errorThresholdPercentage: 50, // Trip if 50% fail
-    resetTimeout: 5000 // Wait 5s before trying again
+    timeout: 60000,
+    errorThresholdPercentage: 50,
+    resetTimeout: 5000,
   });
 
   async findByAlias(alias: string): Promise<SmartLink | null> {
     const cacheKey = RedisCacheService.formatLinkKey(alias);
-    
-    // 1. Check Cache
+
     const cachedLink = await RedisCacheService.get<SmartLink>(cacheKey);
     if (cachedLink) {
-      return { ...cachedLink, createdAt: new Date(cachedLink.createdAt), updatedAt: new Date(cachedLink.updatedAt) };
+      return {
+        ...cachedLink,
+        createdAt: new Date(cachedLink.createdAt),
+        updatedAt: new Date(cachedLink.updatedAt),
+      };
     }
 
-    // 2. Cache Miss -> Query DB via Circuit Breaker
     let dbLink: SmartLink | null = null;
     try {
       dbLink = await LinkRepository.findUniqueBreaker.fire(alias) as SmartLink | null;
-    } catch (e: any) {
-      console.error(`[CircuitBreaker] Failed to fetch alias ${alias} from DB: ${e.message}`);
-      // Re-throw so the redirect controller can catch it and return 503 instead of 500
+    } catch (e: unknown) {
+      const errMsg = e instanceof Error ? e.message : 'Unknown error';
+      console.error(`[CircuitBreaker] Failed to fetch alias ${alias} from DB: ${errMsg}`);
       const error = new Error('Database temporarily unavailable');
       error.name = 'ServiceUnavailableError';
       throw error;
     }
 
-    // 3. Populate Cache
     if (dbLink) {
-      // Async fire-and-forget
-      Promise.resolve().then(() => RedisCacheService.set(cacheKey, dbLink));
+      RedisCacheService.set(cacheKey, dbLink).catch(() => {});
     }
 
     return dbLink;
@@ -87,8 +91,8 @@ export class LinkRepository {
   }): Promise<{ items: SmartLink[]; totalItems: number }> {
     const { skip, take, search, status, tags, isFavorite, collectionId, sortBy, sortOrder, userId } = params;
 
-    const where: any = {};
-    
+    const where: Record<string, unknown> = {};
+
     if (userId) {
       where.userId = userId;
     }
@@ -104,7 +108,7 @@ export class LinkRepository {
       where.status = status;
     } else {
       where.status = {
-        notIn: ['ARCHIVED', 'DELETED']
+        notIn: ['ARCHIVED', 'DELETED'],
       };
     }
 
@@ -138,7 +142,7 @@ export class LinkRepository {
   }
 
   async findById(id: string, userId?: string): Promise<SmartLink | null> {
-    const where: any = { id };
+    const where: Record<string, unknown> = { id };
     if (userId) {
       where.userId = userId;
     }
@@ -146,9 +150,6 @@ export class LinkRepository {
   }
 
   async update(id: string, data: Partial<Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'clicks' | 'alias'>>, userId?: string): Promise<SmartLink> {
-    // If scoped, we could use updateMany to ensure ownership, then return the updated row.
-    // However, Prisma doesn't return updated rows for updateMany.
-    // We assume the caller (controller/service) has already verified ownership via findById(id, userId).
     const updated = await prisma.smartLink.update({
       where: { id },
       data: {
@@ -162,15 +163,14 @@ export class LinkRepository {
         fallbackUrl: data.fallbackUrl,
         isFavorite: data.isFavorite,
         collectionId: data.collectionId,
-        trafficVariants: data.trafficVariants !== undefined ? (data.trafficVariants as any) : undefined,
+        trafficVariants: data.trafficVariants !== undefined ? (data.trafficVariants as never) : undefined,
       },
     });
-    
-    // Purge cache
+
     if (updated.alias) {
-      Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(updated.alias)));
+      RedisCacheService.delete(RedisCacheService.formatLinkKey(updated.alias)).catch(() => {});
     }
-    
+
     return updated as SmartLink;
   }
 
@@ -183,10 +183,9 @@ export class LinkRepository {
         alias: deletedAlias,
       },
     });
-    
-    // Purge cache for original alias
-    Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(originalAlias)));
-    
+
+    RedisCacheService.delete(RedisCacheService.formatLinkKey(originalAlias)).catch(() => {});
+
     return updated as SmartLink;
   }
 }

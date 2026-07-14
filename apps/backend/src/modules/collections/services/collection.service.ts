@@ -1,17 +1,18 @@
+import { AppError } from '../../../lib/app-error';
 import { CollectionRepository } from '../repositories/collection.repository';
-import { CreateCollectionDto, UpdateCollectionDto } from '../validators/collection.schema';
-import { Collection } from '../models/collection.domain';
+import type { CreateCollectionDto, UpdateCollectionDto } from '../validators/collection.schema';
+import type { Collection } from '../models/collection.domain';
 
-export class CollectionConflictError extends Error {
+export class CollectionConflictError extends AppError {
   constructor(message: string = 'Collection name already exists') {
-    super(message);
+    super(message, 'COLLECTION_CONFLICT', 409);
     this.name = 'CollectionConflictError';
   }
 }
 
-export class CollectionNotFoundError extends Error {
+export class CollectionNotFoundError extends AppError {
   constructor(message: string = 'Collection not found') {
-    super(message);
+    super(message, 'COLLECTION_NOT_FOUND', 404);
     this.name = 'CollectionNotFoundError';
   }
 }

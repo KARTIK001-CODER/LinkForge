@@ -5,22 +5,21 @@ const getLinkService = new GetLinkService();
 
 export const getLink = async (req: Request, res: Response) => {
   try {
-    const alias = req.params.alias as string;
-    
+    const alias = String(req.params.alias);
+
     if (!alias || !/^[a-zA-Z0-9-]+$/.test(alias)) {
       res.status(400).json({ success: false, message: 'Invalid alias format' });
       return;
     }
 
     const data = await getLinkService.execute(alias);
-    
+
     if (!data) {
       res.status(404).json({ success: false, message: 'Link not found' });
       return;
     }
 
-    // Verify ownership
-    if (data.userId !== (req as any).user?.id) {
+    if (data.userId !== req.user?.userId) {
       res.status(404).json({ success: false, message: 'Link not found' });
       return;
     }

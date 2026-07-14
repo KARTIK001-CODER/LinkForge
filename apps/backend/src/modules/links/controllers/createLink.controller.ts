@@ -2,14 +2,14 @@ import { Request, Response } from 'express';
 import { CreateLinkService } from '../services/createLink.service';
 import { createLinkSchema } from '../validators/createLink.schema';
 import { AliasConflictError } from '../models/link.domain';
-import { z } from 'zod';
+import { handleControllerError } from '../../../lib/error-handler';
 
 const createLinkService = new CreateLinkService();
 
 export const createLink = async (req: Request, res: Response) => {
   try {
     const data = createLinkSchema.parse(req.body);
-    const link = await createLinkService.execute(data, (req as any).user?.id);
+    const link = await createLinkService.execute(data, req.user?.userId);
 
     res.status(201).json({
       success: true,
@@ -25,16 +25,11 @@ export const createLink = async (req: Request, res: Response) => {
         createdAt: link.createdAt,
       },
     });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      res.status(400).json({ success: false, errors: (error as any).errors });
-      return;
-    }
+  } catch (error: unknown) {
     if (error instanceof AliasConflictError) {
       res.status(409).json({ success: false, message: error.message });
       return;
     }
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Internal server error' });
+    handleControllerError(res, error, 'Create Link');
   }
 };

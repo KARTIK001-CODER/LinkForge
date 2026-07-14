@@ -1,5 +1,6 @@
 export interface SmartLink {
   id: string;
+  userId: string | null;
   destinationUrl: string;
   alias: string;
   passwordHash: string | null;

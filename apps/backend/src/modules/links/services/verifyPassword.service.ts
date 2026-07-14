@@ -8,8 +8,7 @@ export class VerifyPasswordService {
 
   constructor() {
     this.linkRepository = new LinkRepository();
-    // Use fallback for local development if missing
-    this.jwtSecret = process.env.JWT_SECRET || 'fallback_secret_for_local_dev';
+    this.jwtSecret = process.env.JWT_ACCESS_SECRET || 'fallback_secret_for_local_dev';
   }
 
   async verifyPassword(alias: string, passwordAttempt: string): Promise<{ success: boolean; token?: string }> {
@@ -25,7 +24,6 @@ export class VerifyPasswordService {
       return { success: false };
     }
 
-    // Sign a short-lived token specifically for this alias
     const token = jwt.sign({ alias }, this.jwtSecret, { expiresIn: '30s' });
 
     return { success: true, token };

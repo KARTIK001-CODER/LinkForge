@@ -21,6 +21,7 @@ export class GetLinkService {
 
     return {
       id: item.id,
+      userId: item.userId,
       alias: item.alias,
       shortUrl: `${process.env.BASE_URL || 'http://localhost:4000'}/${item.alias}`,
       destinationUrl: item.destinationUrl,
