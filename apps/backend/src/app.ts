@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -55,5 +55,10 @@ app.use('/api/v1/collections', AuthMiddleware.optionalAuth, collectionRoutes);
 app.use('/api/v1/analytics/links', AuthMiddleware.optionalAuth, analyticsRoutes);
 
 app.use('/', redirectRoutes);
+
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+  console.error('[Global Error Handler]', err);
+  res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } });
+});
 
 export default app;
