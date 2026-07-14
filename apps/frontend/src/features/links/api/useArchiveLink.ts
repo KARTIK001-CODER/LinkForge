@@ -6,7 +6,7 @@ export const useArchiveLink = (id: string) => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}/archive`);
+      const response = await axios.patch(`/api/v1/links/${id}/archive`);
       return response.data;
     },
     onSuccess: () => {

@@ -14,7 +14,7 @@ export const useCreateLink = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateLinkPayload) => {
-      const response = await axios.post('http://localhost:4000/api/v1/links', payload);
+      const response = await axios.post('/api/v1/links', payload);
 
       return response.data;
     },

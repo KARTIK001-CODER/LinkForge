@@ -14,7 +14,7 @@ export const useEditLink = (id: string) => {
 
   return useMutation({
     mutationFn: async (payload: EditLinkPayload) => {
-      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}`, payload);
+      const response = await axios.patch(`/api/v1/links/${id}`, payload);
 
       
 

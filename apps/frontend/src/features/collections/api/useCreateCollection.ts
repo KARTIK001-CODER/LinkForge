@@ -11,7 +11,7 @@ export const useCreateCollection = () => {
 
   return useMutation({
     mutationFn: async (payload: CreateCollectionPayload) => {
-      const response = await axios.post('http://localhost:4000/api/v1/collections', payload);
+      const response = await axios.post('/api/v1/collections', payload);
 
       
 

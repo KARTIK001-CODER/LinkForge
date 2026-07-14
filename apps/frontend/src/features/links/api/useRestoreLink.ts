@@ -6,7 +6,7 @@ export const useRestoreLink = (id: string) => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await axios.patch(`http://localhost:4000/api/v1/links/${id}/restore`);
+      const response = await axios.patch(`/api/v1/links/${id}/restore`);
       return response.data;
     },
     onSuccess: () => {

@@ -4,7 +4,7 @@ import { Lock, Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1';
+const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 // Custom fetcher for password verification
 const verifyPassword = async (alias: string, password: string) => {
@@ -22,7 +22,7 @@ export default function ProtectedPage() {
     onSuccess: (data) => {
       if (data.success && data.data?.token) {
         // Redirect back to the shortlink using the token
-        // E.g., http://localhost:4000/:alias?token=...
+        // E.g., /:alias?token=...
         // We can extract the base url from API_URL by removing /api/v1
         const backendBaseUrl = API_URL.replace('/api/v1', '');
         window.location.href = `${backendBaseUrl}/${alias}?token=${data.data.token}`;

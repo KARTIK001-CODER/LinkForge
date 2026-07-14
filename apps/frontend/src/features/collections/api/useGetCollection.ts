@@ -7,7 +7,7 @@ export const useGetCollection = (id: string | null) => {
     queryKey: ['collection', id],
     queryFn: async (): Promise<GetCollectionResponse> => {
       if (!id) throw new Error('Collection ID is required');
-      const response = await axios.get(`http://localhost:4000/api/v1/collections/${id}`);
+      const response = await axios.get(`/api/v1/collections/${id}`);
       
       return response.data;
     },

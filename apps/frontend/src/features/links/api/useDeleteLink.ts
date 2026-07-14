@@ -6,7 +6,7 @@ export const useDeleteLink = (id: string) => {
 
   return useMutation({
     mutationFn: async () => {
-      const response = await axios.delete(`http://localhost:4000/api/v1/links/${id}`);
+      const response = await axios.delete(`/api/v1/links/${id}`);
       return response.data;
     },
     onSuccess: () => {
