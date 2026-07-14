@@ -4,10 +4,11 @@ import { RedisCacheService } from '../../redirect/services/redis-cache.service';
 import CircuitBreaker = require('opossum');
 
 export class LinkRepository {
-  async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'clicks'> & { status?: string }): Promise<SmartLink> {
+  async create(data: Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'status' | 'clicks'> & { status?: string, userId?: string }): Promise<SmartLink> {
     try {
       const link = await prisma.smartLink.create({
         data: {
+          userId: data.userId,
           destinationUrl: data.destinationUrl,
           alias: data.alias,
           passwordHash: data.passwordHash,
@@ -82,10 +83,15 @@ export class LinkRepository {
     collectionId?: string;
     sortBy: 'createdAt' | 'alias';
     sortOrder: 'asc' | 'desc';
+    userId?: string;
   }): Promise<{ items: SmartLink[]; totalItems: number }> {
-    const { skip, take, search, status, tags, isFavorite, collectionId, sortBy, sortOrder } = params;
+    const { skip, take, search, status, tags, isFavorite, collectionId, sortBy, sortOrder, userId } = params;
 
     const where: any = {};
+    
+    if (userId) {
+      where.userId = userId;
+    }
 
     if (search) {
       where.OR = [
@@ -131,11 +137,18 @@ export class LinkRepository {
     return { items: items as SmartLink[], totalItems };
   }
 
-  async findById(id: string): Promise<SmartLink | null> {
-    return prisma.smartLink.findUnique({ where: { id } }) as Promise<SmartLink | null>;
+  async findById(id: string, userId?: string): Promise<SmartLink | null> {
+    const where: any = { id };
+    if (userId) {
+      where.userId = userId;
+    }
+    return prisma.smartLink.findFirst({ where }) as Promise<SmartLink | null>;
   }
 
-  async update(id: string, data: Partial<Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'clicks' | 'alias'>>): Promise<SmartLink> {
+  async update(id: string, data: Partial<Omit<SmartLink, 'id' | 'createdAt' | 'updatedAt' | 'clicks' | 'alias'>>, userId?: string): Promise<SmartLink> {
+    // If scoped, we could use updateMany to ensure ownership, then return the updated row.
+    // However, Prisma doesn't return updated rows for updateMany.
+    // We assume the caller (controller/service) has already verified ownership via findById(id, userId).
     const updated = await prisma.smartLink.update({
       where: { id },
       data: {

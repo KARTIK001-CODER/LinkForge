@@ -8,7 +8,8 @@ const collectionService = new CollectionService();
 export const createCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const data = createCollectionSchema.parse(req.body);
-    const collection = await collectionService.create(data);
+    const userId = (req as any).user?.id;
+    const collection = await collectionService.create(data, userId);
     res.status(201).json({ success: true, data: collection });
   } catch (error: any) {
     if (error instanceof z.ZodError || error.name === 'ZodError') {
@@ -26,7 +27,8 @@ export const createCollection = async (req: Request, res: Response): Promise<voi
 
 export const getCollections = async (req: Request, res: Response): Promise<void> => {
   try {
-    const collections = await collectionService.findAll();
+    const userId = (req as any).user?.id;
+    const collections = await collectionService.findAll(userId);
     res.status(200).json({ success: true, data: collections });
   } catch (error: any) {
     console.error('Error fetching collections:', error);
@@ -37,7 +39,8 @@ export const getCollections = async (req: Request, res: Response): Promise<void>
 export const getCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    const collection = await collectionService.findById(id);
+    const userId = (req as any).user?.id;
+    const collection = await collectionService.findById(id, userId);
     res.status(200).json({ success: true, data: collection });
   } catch (error: any) {
     if (error instanceof CollectionNotFoundError) {
@@ -52,8 +55,9 @@ export const getCollection = async (req: Request, res: Response): Promise<void> 
 export const updateCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     const data = updateCollectionSchema.parse(req.body);
-    const collection = await collectionService.update(id, data);
+    const collection = await collectionService.update(id, data, userId);
     res.status(200).json({ success: true, data: collection });
   } catch (error: any) {
     if (error instanceof z.ZodError || error.name === 'ZodError') {
@@ -76,7 +80,8 @@ export const updateCollection = async (req: Request, res: Response): Promise<voi
 export const deleteCollection = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
-    await collectionService.delete(id);
+    const userId = (req as any).user?.id;
+    await collectionService.delete(id, userId);
     res.status(200).json({ success: true, message: 'Collection deleted successfully' });
   } catch (error: any) {
     if (error instanceof CollectionNotFoundError) {

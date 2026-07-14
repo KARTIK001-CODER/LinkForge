@@ -6,6 +6,11 @@ export class RuleController {
   static async getRules(req: Request, res: Response) {
     try {
       const linkId = req.params.id;
+      const userId = (req as any).user?.id;
+      
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ status: 'error', message: 'Link not found' });
+
       const rules = await prisma.redirectRule.findMany({
         where: { linkId },
         orderBy: { priority: 'asc' }
@@ -19,8 +24,12 @@ export class RuleController {
   static async createRule(req: Request, res: Response) {
     try {
       const linkId = req.params.id;
+      const userId = (req as any).user?.id;
       const { priority, destinationUrl, conditions } = req.body;
       
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ status: 'error', message: 'Link not found' });
+
       const rule = await prisma.redirectRule.create({
         data: {
           linkId,
@@ -31,9 +40,8 @@ export class RuleController {
       });
 
       // Purge cache
-      const link = await prisma.smartLink.findUnique({ where: { id: linkId }});
       if (link?.alias) {
-        Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(link.alias)));
+        Promise.resolve().then(() => RedisCacheService.delete(RedisCacheService.formatLinkKey(link.alias!)));
       }
 
       return res.status(201).json({ status: 'success', data: rule });
@@ -45,8 +53,12 @@ export class RuleController {
   static async deleteRule(req: Request, res: Response) {
     try {
       const { ruleId } = req.params;
+      const userId = (req as any).user?.id;
       
       const rule = await prisma.redirectRule.findUnique({ where: { id: ruleId }, include: { link: true } });
+      if (!rule || rule.link?.userId !== userId) {
+        return res.status(404).json({ status: 'error', message: 'Rule not found' });
+      }
       
       await prisma.redirectRule.delete({ where: { id: ruleId } });
       

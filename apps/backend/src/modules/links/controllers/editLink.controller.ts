@@ -7,12 +7,13 @@ export const editLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
+    // Verify user owns this link using req.user
+    const userId = (req as any).user?.id;
     
     const data = editLinkSchema.parse(req.body);
     const service = new EditLinkService();
     
-    const updatedLink = await service.execute(id, data);
+    const updatedLink = await service.execute(id, data, userId);
     
     res.status(200).json({
       status: 'success',

@@ -8,7 +8,7 @@ export class GetLinksService {
     this.linkRepository = new LinkRepository();
   }
 
-  async execute(query: GetLinksQuery) {
+  async execute(query: GetLinksQuery, userId?: string) {
     const { page, limit, search, status, tags, isFavorite, collectionId, sortBy, sortOrder } = query;
     
     const skip = (page - 1) * limit;
@@ -26,6 +26,7 @@ export class GetLinksService {
       collectionId,
       sortBy,
       sortOrder,
+      userId,
     });
 
     const totalPages = Math.ceil(totalItems / limit);

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { AnalyticsService } from '../services/analytics.service';
 import { ExportService } from '../services/export.service';
 import { z } from 'zod';
+import prisma from '../../../lib/prisma';
 
 const analyticsService = new AnalyticsService();
 const exportService = new ExportService();
@@ -16,6 +17,11 @@ export class AnalyticsController {
   static async getSummary(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
+      const userId = (req as any).user?.id;
+      
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ error: 'Link not found' });
+
       const workspaceId = 'todo-auth-context';
       const query = querySchema.parse(req.query);
 
@@ -37,6 +43,10 @@ export class AnalyticsController {
   static async getTimeseries(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
+      const userId = (req as any).user?.id;
+      
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ error: 'Link not found' });
 
       const schema = z.object({
         startDate: z.string().optional(),
@@ -63,7 +73,11 @@ export class AnalyticsController {
   static async getBreakdown(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
+      const userId = (req as any).user?.id;
       const { dimension } = req.query;
+      
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ error: 'Link not found' });
 
       if (!dimension) {
         return res.status(400).json({ error: 'dimension is required' });
@@ -80,6 +94,10 @@ export class AnalyticsController {
 
   static async getRealtime(req: Request, res: Response) {
     const linkId = String(req.params.linkId);
+    const userId = (req as any).user?.id;
+    
+    const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+    if (!link) return res.status(404).json({ error: 'Link not found' });
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -100,6 +118,11 @@ export class AnalyticsController {
   static async requestExport(req: Request, res: Response) {
     try {
       const linkId = String(req.params.linkId);
+      const userId = (req as any).user?.id;
+      
+      const link = await prisma.smartLink.findFirst({ where: { id: linkId, userId } });
+      if (!link) return res.status(404).json({ error: 'Link not found' });
+
       const jobId = await exportService.createExportJob(linkId);
       return res.json({ jobId, message: 'Export job created successfully' });
     } catch (error: any) {
@@ -110,8 +133,17 @@ export class AnalyticsController {
   static async getExportStatus(req: Request, res: Response) {
     try {
       const jobId = String(req.params.jobId);
+      const userId = (req as any).user?.id;
+
       const job = await exportService.getExportJob(jobId);
       if (!job) return res.status(404).json({ error: 'Job not found' });
+      
+      // Additional check to verify the link belongs to the user
+      if (job.linkId) {
+        const link = await prisma.smartLink.findFirst({ where: { id: job.linkId, userId } });
+        if (!link) return res.status(404).json({ error: 'Link not found' });
+      }
+
       res.set('Cache-Control', 'no-cache');
       return res.json(job);
     } catch (error: any) {

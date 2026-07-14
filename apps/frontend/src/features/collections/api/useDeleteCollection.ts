@@ -1,26 +1,16 @@
+import axios from 'axios';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 
-export const useDeleteCollection = () => {
+export const useDeleteCollection = (id: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`http://localhost:4000/api/v1/collections/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to delete collection');
-      }
-
-      return response.json();
+    mutationFn: async () => {
+      const response = await axios.delete(`http://localhost:4000/api/v1/collections/${id}`);
+      return response.data;
     },
-    onSuccess: (data, id) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['collections'] });
-      // Invalidate links so they reflect the unassigned state
-      queryClient.invalidateQueries({ queryKey: ['links'] });
-      queryClient.invalidateQueries({ queryKey: ['link'] });
     },
   });
 };

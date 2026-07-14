@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
@@ -22,7 +23,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ['rules', linkId],
     queryFn: async () => {
-      const res = await fetch(`/api/v1/links/${linkId}/rules`);
+      const res = await axios.get(`/api/v1/links/${linkId}/rules`);
       const json = await res.json();
       return json.data as RedirectRule[];
     }
@@ -30,13 +31,9 @@ export function RulesManager({ linkId }: { linkId: string }) {
 
   const createRule = useMutation({
     mutationFn: async (rule: any) => {
-      const res = await fetch(`/api/v1/links/${linkId}/rules`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rule)
-      });
+      const res = await axios.post(`/api/v1/links/${linkId}/rules`, rule);
       if (!res.ok) throw new Error('Failed to create rule');
-      return res.json();
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', linkId] });
@@ -48,9 +45,7 @@ export function RulesManager({ linkId }: { linkId: string }) {
 
   const deleteRule = useMutation({
     mutationFn: async (ruleId: string) => {
-      const res = await fetch(`/api/v1/links/${linkId}/rules/${ruleId}`, {
-        method: 'DELETE'
-      });
+      const res = await axios.delete(`/api/v1/links/${linkId}/rules/${ruleId}`);
       if (!res.ok) throw new Error('Failed to delete rule');
     },
     onSuccess: () => {

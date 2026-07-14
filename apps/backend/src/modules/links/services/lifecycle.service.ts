@@ -4,8 +4,8 @@ import { SmartLink } from '../models/link.domain';
 export class LifecycleService {
   constructor(private linkRepository: LinkRepository = new LinkRepository()) {}
 
-  async archive(id: string): Promise<SmartLink> {
-    const existingLink = await this.linkRepository.findById(id);
+  async archive(id: string, userId?: string): Promise<SmartLink> {
+    const existingLink = await this.linkRepository.findById(id, userId);
     
     if (!existingLink) {
       const error = new Error('Link not found');
@@ -23,11 +23,11 @@ export class LifecycleService {
       return existingLink; // Idempotent
     }
 
-    return this.linkRepository.update(id, { status: 'ARCHIVED' });
+    return this.linkRepository.update(id, { status: 'ARCHIVED' }, userId);
   }
 
-  async restore(id: string): Promise<SmartLink> {
-    const existingLink = await this.linkRepository.findById(id);
+  async restore(id: string, userId?: string): Promise<SmartLink> {
+    const existingLink = await this.linkRepository.findById(id, userId);
     
     if (!existingLink) {
       const error = new Error('Link not found');
@@ -43,11 +43,11 @@ export class LifecycleService {
 
     // Restore to ACTIVE by default. If it was expired, a cron would catch it, 
     // or we could check expiresAt here, but KISS for now as FDD says EXPIRED takes precedence anyway during routing.
-    return this.linkRepository.update(id, { status: 'ACTIVE' });
+    return this.linkRepository.update(id, { status: 'ACTIVE' }, userId);
   }
 
-  async delete(id: string): Promise<SmartLink> {
-    const existingLink = await this.linkRepository.findById(id);
+  async delete(id: string, userId?: string): Promise<SmartLink> {
+    const existingLink = await this.linkRepository.findById(id, userId);
     
     if (!existingLink) {
       const error = new Error('Link not found');

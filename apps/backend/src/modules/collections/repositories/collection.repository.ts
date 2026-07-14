@@ -4,9 +4,10 @@ import { CreateCollectionDto, UpdateCollectionDto } from '../validators/collecti
 import prisma from '../../../lib/prisma';
 
 export class CollectionRepository {
-  async create(data: CreateCollectionDto): Promise<Collection> {
+  async create(data: CreateCollectionDto & { userId?: string }): Promise<Collection> {
     const collection = await prisma.collection.create({
       data: {
+        userId: data.userId,
         name: data.name,
         description: data.description,
       },
@@ -19,8 +20,9 @@ export class CollectionRepository {
     return collection as Collection;
   }
 
-  async findAll(): Promise<Collection[]> {
+  async findAll(userId?: string): Promise<Collection[]> {
     const collections = await prisma.collection.findMany({
+      where: userId ? { userId } : {},
       orderBy: { createdAt: 'asc' },
       include: {
         _count: {
@@ -31,9 +33,9 @@ export class CollectionRepository {
     return collections as Collection[];
   }
 
-  async findById(id: string): Promise<Collection | null> {
-    const collection = await prisma.collection.findUnique({
-      where: { id },
+  async findById(id: string, userId?: string): Promise<Collection | null> {
+    const collection = await prisma.collection.findFirst({
+      where: userId ? { id, userId } : { id },
       include: {
         _count: {
           select: { links: true }
@@ -43,14 +45,14 @@ export class CollectionRepository {
     return collection as Collection | null;
   }
 
-  async findByName(name: string): Promise<Collection | null> {
+  async findByName(name: string, userId?: string): Promise<Collection | null> {
     const collection = await prisma.collection.findFirst({
-      where: { name: { equals: name, mode: 'insensitive' } }
+      where: userId ? { name: { equals: name, mode: 'insensitive' }, userId } : { name: { equals: name, mode: 'insensitive' } }
     });
     return collection as Collection | null;
   }
 
-  async update(id: string, data: UpdateCollectionDto): Promise<Collection> {
+  async update(id: string, data: UpdateCollectionDto, userId?: string): Promise<Collection> {
     const collection = await prisma.collection.update({
       where: { id },
       data: {
@@ -66,7 +68,7 @@ export class CollectionRepository {
     return collection as Collection;
   }
 
-  async delete(id: string): Promise<void> {
+  async delete(id: string, userId?: string): Promise<void> {
     await prisma.collection.delete({
       where: { id }
     });

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Percent, Save } from 'lucide-react';
@@ -32,11 +33,8 @@ export function TrafficManager({ linkId, initialVariants }: { linkId: string, in
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ trafficVariants: data })
       });
-      if (!res.ok) {
-        const json = await res.json();
-        throw new Error(json.message || 'Failed to update traffic rules');
-      }
-      return res.json();
+      
+      return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['link', linkId] }); // Assuming parent query key is ['link', alias] or id

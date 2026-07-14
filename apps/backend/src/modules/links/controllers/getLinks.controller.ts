@@ -7,7 +7,7 @@ const getLinksService = new GetLinksService();
 export const getLinks = async (req: Request, res: Response) => {
   try {
     const query = getLinksSchema.parse(req.query);
-    const data = await getLinksService.execute(query);
+    const data = await getLinksService.execute(query, (req as any).user?.id);
     res.status(200).json({ success: true, data });
   } catch (error: any) {
     if (error.name === 'ZodError') {

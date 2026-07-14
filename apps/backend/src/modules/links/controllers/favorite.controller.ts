@@ -6,10 +6,9 @@ const favoriteService = new FavoriteService();
 export const favoriteLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
-    
-    const updatedLink = await favoriteService.toggleFavorite(id, true);
+    const updatedLink = await favoriteService.toggleFavorite(id, true, userId);
     
     res.status(200).json({
       success: true,
@@ -26,10 +25,9 @@ export const favoriteLink = async (req: Request, res: Response): Promise<void> =
 export const unfavoriteLink = async (req: Request, res: Response): Promise<void> => {
   try {
     const id = req.params.id as string;
+    const userId = (req as any).user?.id;
     
-    // In a real app, verify user owns this link using req.user (IDOR protection)
-    
-    const updatedLink = await favoriteService.toggleFavorite(id, false);
+    const updatedLink = await favoriteService.toggleFavorite(id, false, userId);
     
     res.status(200).json({
       success: true,

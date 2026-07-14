@@ -19,47 +19,47 @@ export class CollectionNotFoundError extends Error {
 export class CollectionService {
   constructor(private readonly collectionRepository: CollectionRepository = new CollectionRepository()) {}
 
-  async create(data: CreateCollectionDto): Promise<Collection> {
-    const existing = await this.collectionRepository.findByName(data.name);
+  async create(data: CreateCollectionDto, userId?: string): Promise<Collection> {
+    const existing = await this.collectionRepository.findByName(data.name, userId);
     if (existing) {
       throw new CollectionConflictError();
     }
-    return this.collectionRepository.create(data);
+    return this.collectionRepository.create({ ...data, userId });
   }
 
-  async findAll(): Promise<Collection[]> {
-    return this.collectionRepository.findAll();
+  async findAll(userId?: string): Promise<Collection[]> {
+    return this.collectionRepository.findAll(userId);
   }
 
-  async findById(id: string): Promise<Collection> {
-    const collection = await this.collectionRepository.findById(id);
+  async findById(id: string, userId?: string): Promise<Collection> {
+    const collection = await this.collectionRepository.findById(id, userId);
     if (!collection) {
       throw new CollectionNotFoundError();
     }
     return collection;
   }
 
-  async update(id: string, data: UpdateCollectionDto): Promise<Collection> {
-    const existing = await this.collectionRepository.findById(id);
+  async update(id: string, data: UpdateCollectionDto, userId?: string): Promise<Collection> {
+    const existing = await this.collectionRepository.findById(id, userId);
     if (!existing) {
       throw new CollectionNotFoundError();
     }
 
     if (data.name && data.name !== existing.name) {
-      const nameConflict = await this.collectionRepository.findByName(data.name);
+      const nameConflict = await this.collectionRepository.findByName(data.name, userId);
       if (nameConflict) {
         throw new CollectionConflictError();
       }
     }
 
-    return this.collectionRepository.update(id, data);
+    return this.collectionRepository.update(id, data, userId);
   }
 
-  async delete(id: string): Promise<void> {
-    const existing = await this.collectionRepository.findById(id);
+  async delete(id: string, userId?: string): Promise<void> {
+    const existing = await this.collectionRepository.findById(id, userId);
     if (!existing) {
       throw new CollectionNotFoundError();
     }
-    return this.collectionRepository.delete(id);
+    return this.collectionRepository.delete(id, userId);
   }
 }

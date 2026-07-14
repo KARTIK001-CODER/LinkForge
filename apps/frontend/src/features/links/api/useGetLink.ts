@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import type { LinkItem } from './useGetLinks';
 
@@ -10,14 +11,8 @@ export const useGetLink = (alias: string) => {
   return useQuery({
     queryKey: ['link', alias],
     queryFn: async (): Promise<GetLinkResponse> => {
-      const response = await fetch(`/api/v1/links/${alias}`);
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Link not found');
-        }
-        throw new Error('Failed to fetch link details');
-      }
-      return response.json();
+      const response = await axios.get(`/api/v1/links/${alias}`);
+      return response.data;
     },
     retry: false,
   });
