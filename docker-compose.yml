@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -39,23 +37,24 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: linkforge-backend
+
+    env_file:
+      - ./apps/backend/.env
+
     ports:
       - "4000:4000"
+
     environment:
-      DATABASE_URL: "postgresql://linkforge:linkforge@postgres:5432/linkforge"
       REDIS_URL: "redis://redis:6379"
       PORT: "4000"
       NODE_ENV: "production"
-      JWT_ACCESS_SECRET: "${JWT_ACCESS_SECRET}"
-      JWT_REFRESH_SECRET: "${JWT_REFRESH_SECRET}"
-      ANALYTICS_SALT: "${ANALYTICS_SALT}"
       FRONTEND_URL: "http://localhost:5173"
       BASE_URL: "http://localhost:4000"
+
     depends_on:
-      postgres:
-        condition: service_healthy
       redis:
         condition: service_healthy
+
     restart: unless-stopped
 
 volumes:
