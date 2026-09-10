@@ -1,19 +1,19 @@
 import axios from 'axios';
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
+import { Plus, Trash2, Zap } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { EmptyState } from '@/components/ui/empty-state';
 
-interface RedirectRule {
-  id: string;
-  priority: number;
-  destinationUrl: string;
-  conditions: unknown[];
-}
+interface RedirectRule { id: string; priority: number; destinationUrl: string; conditions: Array<{type:string; operator:string; value:string}> }
 
 export function RulesManager({ linkId }: { linkId: string }) {
-  const queryClient = useQueryClient();
+  const qc = useQueryClient();
   const [isAdding, setIsAdding] = useState(false);
-
   const [destinationUrl, setDestinationUrl] = useState('');
   const [type, setType] = useState('country');
   const [operator, setOperator] = useState('eq');
@@ -21,133 +21,87 @@ export function RulesManager({ linkId }: { linkId: string }) {
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ['rules', linkId],
-    queryFn: async () => {
-      const res = await axios.get(`/api/v1/links/${linkId}/rules`);
-      return res.data.data as RedirectRule[];
-    },
+    queryFn: async () => { const r = await axios.get(`/api/v1/links/${linkId}/rules`); return r.data.data as RedirectRule[]; },
   });
 
   const createRule = useMutation({
-    mutationFn: async (rule: { priority: number; destinationUrl: string; conditions: unknown[] }) => {
-      const res = await axios.post(`/api/v1/links/${linkId}/rules`, rule);
-      return res.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules', linkId] });
-      setIsAdding(false);
-      setDestinationUrl('');
-      setValue('');
-    },
+    mutationFn: async (rule: { priority: number; destinationUrl: string; conditions: unknown[] }) => (await axios.post(`/api/v1/links/${linkId}/rules`, rule)).data,
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['rules', linkId] }); setIsAdding(false); setDestinationUrl(''); setValue(''); },
   });
 
   const deleteRule = useMutation({
-    mutationFn: async (ruleId: string) => {
-      await axios.delete(`/api/v1/links/${linkId}/rules/${ruleId}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules', linkId] });
-    },
+    mutationFn: async (ruleId: string) => await axios.delete(`/api/v1/links/${linkId}/rules/${ruleId}`),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['rules', linkId] }),
   });
 
-  if (isLoading) return <div className="animate-pulse h-32 bg-gray-100 rounded-lg" />;
-  if (isError) return <div className="text-red-500">Failed to load rules.</div>;
+  if (isLoading) return <Skeleton className="h-32 w-full" />;
+  if (isError) return <Card className="p-6 text-sm text-destructive">Failed to load rules.</Card>;
 
   const rules = data || [];
 
   return (
-    <div className="bg-white shadow rounded-lg p-6 mt-8">
-      <div className="flex justify-between items-center mb-6">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">Smart Redirect Rules</h3>
-        <button
-          onClick={() => setIsAdding(!isAdding)}
-          className="inline-flex items-center px-3 py-1.5 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-        >
-          <Plus className="w-4 h-4 mr-1" /> Add Rule
-        </button>
-      </div>
-
-      {isAdding && (
-        <div className="mb-6 p-4 border border-gray-200 rounded-md bg-gray-50">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Create New Rule</h4>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Type</label>
-              <select value={type} onChange={e => setType(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                <option value="country">Country</option>
-                <option value="device">Device</option>
-                <option value="region">Region</option>
-                <option value="day_of_week">Day of Week</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Operator</label>
-              <select value={operator} onChange={e => setOperator(e.target.value)} className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md">
-                <option value="eq">Equals (=)</option>
-                <option value="neq">Not Equals (!=)</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Value (e.g. US, mobile)</label>
-              <input type="text" value={value} onChange={e => setValue(e.target.value)} className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-700">Destination URL</label>
-              <input type="text" value={destinationUrl} onChange={e => setDestinationUrl(e.target.value)} className="mt-1 focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md" />
-            </div>
-          </div>
-          <div className="flex justify-end">
-            <button
-              onClick={() => {
-                createRule.mutate({
-                  priority: rules.length + 1,
-                  destinationUrl,
-                  conditions: [{ type, operator, value }],
-                });
-              }}
-              disabled={!value || !destinationUrl}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-            >
-              Save Rule
-            </button>
-          </div>
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0">
+        <div>
+          <CardTitle className="flex items-center gap-2"><Zap className="size-4 text-primary" /> Smart Redirect Rules</CardTitle>
+          <p className="text-xs text-muted-foreground mt-1">Route visitors based on country, device, and more.</p>
         </div>
-      )}
-
-      {rules.length === 0 && !isAdding ? (
-        <div className="text-center py-6 text-gray-500 text-sm">No rules configured yet.</div>
-      ) : (
-        <div className="space-y-3">
-          {rules.map((rule) => (
-            <div key={rule.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-md">
-              <div className="flex items-center">
-                <div className="flex flex-col items-center mr-4">
-                  <button className="text-gray-400 hover:text-gray-600"><ArrowUp className="w-4 h-4" /></button>
-                  <span className="text-xs font-bold">{rule.priority}</span>
-                  <button className="text-gray-400 hover:text-gray-600"><ArrowDown className="w-4 h-4" /></button>
-                </div>
-                <div>
-                  <div className="flex flex-wrap gap-2 mb-1">
-                    {(rule.conditions as Array<{ type: string; operator: string; value: string }>).map((c, i) => (
-                      <span key={i} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {c.type} {c.operator} {c.value}
-                      </span>
-                    ))}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Redirects to: <span className="font-medium text-gray-900">{rule.destinationUrl}</span>
-                  </div>
-                </div>
+        <Button size="sm" onClick={()=> setIsAdding(!isAdding)}><Plus className="size-4" /> Add Rule</Button>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {isAdding && (
+          <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-4">
+            <p className="text-sm font-medium">Create New Rule</p>
+            {/* Visual rule builder */}
+            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground"><span className="rounded bg-primary px-1.5 py-0.5 text-primary-foreground text-[10px]">IF</span> Condition</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <select value={type} onChange={e=> setType(e.target.value)} className="h-9 rounded-lg border border-border bg-card px-3 text-sm">
+                  <option value="country">Country</option>
+                  <option value="device">Device</option>
+                  <option value="region">Region</option>
+                  <option value="day_of_week">Day of Week</option>
+                  <option value="browser">Browser</option>
+                </select>
+                <select value={operator} onChange={e=> setOperator(e.target.value)} className="h-9 rounded-lg border border-border bg-card px-3 text-sm">
+                  <option value="eq">is</option>
+                  <option value="neq">is not</option>
+                </select>
+                <Input placeholder="e.g. IN, mobile, Chrome" value={value} onChange={e=> setValue(e.target.value)} />
               </div>
-              <button
-                onClick={() => deleteRule.mutate(rule.id)}
-                className="p-2 text-red-500 hover:bg-red-50 rounded-md"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-muted-foreground pt-2"><span className="rounded bg-success px-1.5 py-0.5 text-white text-[10px]">THEN</span> Redirect to</div>
+              <Input placeholder="https://example.com/target" value={destinationUrl} onChange={e=> setDestinationUrl(e.target.value)} />
             </div>
-          ))}
-        </div>
-      )}
-    </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="ghost" size="sm" onClick={()=> setIsAdding(false)}>Cancel</Button>
+              <Button size="sm" disabled={!value || !destinationUrl} onClick={()=> createRule.mutate({ priority: rules.length+1, destinationUrl, conditions: [{ type, operator, value }] })}>Save Rule</Button>
+            </div>
+          </div>
+        )}
+
+        {rules.length===0 && !isAdding ? (
+          <EmptyState icon={Zap} title="No smart rules yet" description="Create your first rule to route visitors intelligently." />
+        ) : (
+          <div className="space-y-3">
+            {rules.map((rule)=> (
+              <div key={rule.id} className="flex items-start justify-between rounded-xl border border-border bg-card p-4">
+                <div className="flex gap-3">
+                  <span className="flex size-7 items-center justify-center rounded-lg bg-muted border border-border text-xs font-bold">{rule.priority}</span>
+                  <div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {rule.conditions.map((c,i)=> (
+                        <Badge key={i} variant="secondary" className="font-mono text-xs">IF {c.type} {c.operator} {c.value}</Badge>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-sm">→ <span className="font-medium font-mono text-primary">{rule.destinationUrl}</span></p>
+                  </div>
+                </div>
+                <Button variant="ghost" size="icon-xs" onClick={()=> deleteRule.mutate(rule.id)} className="text-destructive hover:bg-destructive/10"><Trash2 className="size-4" /></Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

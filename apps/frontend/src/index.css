@@ -5,10 +5,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, sans-serif,
-    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular,
-    Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  --font-sans: 'Geist Variable', 'Geist', Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
@@ -38,108 +36,79 @@
   --color-card-foreground: hsl(var(--card-foreground));
 
   --color-success: hsl(var(--success));
-  --color-success-foreground: hsl(var(--success-foreground));
-
   --color-warning: hsl(var(--warning));
-  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-danger: hsl(var(--danger));
+
+  --color-surface: hsl(var(--surface));
+  --color-surface-elevated: hsl(var(--surface-elevated));
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
-
-  --animate-accordion-down: accordion-down 0.2s ease-out;
-  --animate-accordion-up: accordion-up 0.2s ease-out;
-
-  @keyframes accordion-down {
-    from {
-      height: 0;
-    }
-    to {
-      height: var(--radix-accordion-content-height);
-    }
-  }
-  @keyframes accordion-up {
-    from {
-      height: var(--radix-accordion-content-height);
-    }
-    to {
-      height: 0;
-    }
-  }
 }
 
-@utility container {
-  margin-inline: auto;
-  padding-inline: 2rem;
-  @media (width >= --theme(--breakpoint-sm)) {
-    max-width: none;
-  }
-  @media (width >= 1600px) {
-    max-width: 1600px;
-  }
-}
-
-/*
-  The default theme is dark mode.
-*/
 @layer base {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 6%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 6%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 226 100% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 4% 12%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 240 4% 16%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 4% 16%;
-    --input: 240 4% 16%;
-    --ring: 226 100% 60%;
-    
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 90% 50%;
-    --warning-foreground: 0 0% 100%;
+    /* ColorHunt #555879 #98A1BC #DED3C4 #F4EBD3 - FULL THEME */
+    --background: 38 58% 89%; /* #F4EBD3 - lightest cream canvas */
+    --foreground: 236 17% 40%; /* #555879 - ink */
+    --surface: 38 28% 82%; /* #DED3C4 - warm sand for header/sidebar */
+    --surface-elevated: 0 0% 100%;
+    --card: 0 0% 100%; /* white cards pop on cream */
+    --card-foreground: 236 17% 40%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 236 17% 40%;
 
-    --radius: 0.375rem;
+    --primary: 236 17% 40%; /* #555879 - primary */
+    --primary-foreground: 38 58% 97%; /* near #F4EBD3 */
+    --primary-hover: 236 17% 33%;
+
+    --secondary: 38 28% 82%; /* #DED3C4 */
+    --secondary-foreground: 236 17% 40%;
+    --muted: 38 20% 88%; /* muted sand - subtle blue-tinted */
+    --muted-foreground: 221 12% 52%; /* desaturated #98A1BC text */
+    --accent: 221 22% 67%; /* #98A1BC - blue-gray accent/border */
+    --accent-foreground: 236 17% 40%;
+
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 0 0% 98%;
+    --danger: 0 72% 52%;
+    --success: 142 65% 36%;
+    --warning: 38 92% 50%;
+
+    --border: 38 22% 82%; /* #DED3C4 based soft border */
+    --input: 38 22% 82%;
+    --ring: 236 17% 40%;
+
+    --radius: 0.625rem;
   }
 
-  /* Provide a light mode fallback but keep it deeply muted to match the app feel */
-  .light {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 226 100% 60%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 226 100% 60%;
-
-    --success: 142 70% 45%;
-    --success-foreground: 0 0% 100%;
-    --warning: 38 90% 50%;
-    --warning-foreground: 0 0% 100%;
-
-    --radius: 0.375rem;
+  .dark {
+    --background: 236 17% 12%;
+    --foreground: 38 58% 89%;
+    --surface: 236 14% 18%;
+    --surface-elevated: 236 12% 22%;
+    --card: 236 14% 18%;
+    --card-foreground: 38 58% 89%;
+    --popover: 236 14% 18%;
+    --popover-foreground: 38 58% 89%;
+    --primary: 38 58% 89%;
+    --primary-foreground: 236 17% 12%;
+    --primary-hover: 38 28% 82%;
+    --secondary: 236 12% 22%;
+    --secondary-foreground: 38 58% 89%;
+    --muted: 236 10% 22%;
+    --muted-foreground: 221 12% 62%;
+    --accent: 221 22% 67%;
+    --accent-foreground: 38 58% 89%;
+    --destructive: 0 72% 52%;
+    --destructive-foreground: 38 58% 89%;
+    --danger: 0 72% 52%;
+    --success: 142 60% 40%;
+    --warning: 38 92% 50%;
+    --border: 236 12% 22%;
+    --input: 236 12% 22%;
+    --ring: 38 58% 89%;
   }
 }
 
@@ -147,17 +116,55 @@
   * {
     @apply border-border;
   }
-  body {
-    @apply bg-background text-foreground;
+  html {
+    scrollbar-gutter: stable;
   }
-  
-  /* Fix browser autofill text visibility in dark mode */
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv02","cv03","cv04","cv11";
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: hsl(var(--border));
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--accent));
+  }
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+  }
   input:-webkit-autofill,
-  input:-webkit-autofill:hover, 
-  input:-webkit-autofill:focus, 
-  input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0 30px hsl(var(--background)) inset !important;
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus {
+    -webkit-box-shadow: 0 0 0 30px hsl(var(--card)) inset !important;
     -webkit-text-fill-color: hsl(var(--foreground)) !important;
     transition: background-color 5000s ease-in-out 0s;
+  }
+}
+
+@utility scrollbar-thin {
+  scrollbar-width: thin;
+}
+
+@theme {
+  --animate-in: animate-in 0.15s ease-out;
+  --animate-out: animate-out 0.15s ease-in;
+  @keyframes animate-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes animate-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
   }
 }

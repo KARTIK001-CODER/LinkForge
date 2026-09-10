@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LinkIcon, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { Link2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../features/auth/api/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -14,117 +17,61 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setIsLoading(true);
-    try {
-      await login(email, password, rememberMe);
-    } catch (err: any) {
-      const msg = err?.response?.data?.error?.message || 'Invalid email or password';
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
+    setError(''); setIsLoading(true);
+    try { await login(email, password, rememberMe); }
+    catch (err: any) { setError(err?.response?.data?.error?.message || 'Invalid email or password'); }
+    finally { setIsLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link to="/" className="flex items-center justify-center mb-6">
-          <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <LinkIcon className="w-7 h-7 text-white" />
-          </div>
-          <span className="ml-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            LinkForge
-          </span>
+    <div className="min-h-screen bg-background flex">
+      <div className="hidden lg:flex w-[46%] flex-col justify-between border-r border-border bg-card p-10">
+        <Link to="/" className="flex items-center gap-2">
+          <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Link2 className="size-4" /></div>
+          <span className="text-sm font-semibold">LinkForge</span>
         </Link>
-        <h2 className="text-center text-3xl font-bold text-gray-900">Welcome back</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Sign in to your account to continue
-        </p>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Powerful link infrastructure, made simple.</h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Create smart links with custom aliases, password protection, A/B routing and real-time analytics — trusted by product & marketing teams.</p>
+          <div className="mt-8 grid grid-cols-3 gap-3 text-center">
+            <div className="rounded-xl border border-border bg-muted p-4"><p className="text-lg font-semibold">10M+</p><p className="text-xs text-muted-foreground">clicks tracked</p></div>
+            <div className="rounded-xl border border-border bg-muted p-4"><p className="text-lg font-semibold">99.9%</p><p className="text-xs text-muted-foreground">uptime</p></div>
+            <div className="rounded-xl border border-border bg-muted p-4"><p className="text-lg font-semibold">&lt;30ms</p><p className="text-xs text-muted-foreground">redirect</p></div>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">© 2026 LinkForge</p>
       </div>
 
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
-          {error && (
-            <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                Email address
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? 'text' : 'password'}
-                  required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition"
-                  placeholder="Enter your password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+      <div className="flex flex-1 items-center justify-center p-6">
+        <Card className="w-full max-w-[420px] border-border">
+          <CardHeader>
+            <div className="lg:hidden flex items-center gap-2 mb-2"><div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Link2 className="size-4" /></div><span className="font-semibold">LinkForge</span></div>
+            <CardTitle>Welcome back</CardTitle>
+            <CardDescription>Sign in to your account to continue</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {error && <div className="mb-4 flex gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"><AlertCircle className="size-4 shrink-0 mt-0.5" />{error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">Email</label>
+                <Input type="email" required value={email} onChange={e=> setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5" />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                />
-                <span className="text-sm text-gray-600">Remember me</span>
-              </label>
-              <Link to="/forgot-password" className="text-sm font-medium text-blue-600 hover:text-blue-500">
-                Forgot password?
-              </Link>
-            </div>
-
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-              ) : 'Sign in'}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="font-medium text-blue-600 hover:text-blue-500">
-              Create one
-            </Link>
-          </p>
-        </div>
+              <div>
+                <label className="text-sm font-medium">Password</label>
+                <div className="relative mt-1.5">
+                  <Input type={showPassword ? "text":"password"} required value={password} onChange={e=> setPassword(e.target.value)} placeholder="Enter password" className="pr-10" />
+                  <button type="button" onClick={()=> setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:text-foreground"><span className="sr-only">toggle</span>{showPassword ? <EyeOff className="size-4"/>:<Eye className="size-4"/>}</button>
+                </div>
+              </div>
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={rememberMe} onChange={e=> setRememberMe(e.target.checked)} className="rounded border-border" /> Remember me</label>
+                <Link to="/forgot-password" className="text-sm text-primary hover:underline">Forgot password?</Link>
+              </div>
+              <Button type="submit" disabled={isLoading} className="w-full">{isLoading ? "..." : "Sign in"}</Button>
+            </form>
+            <p className="mt-6 text-center text-sm text-muted-foreground">Don't have an account? <Link to="/register" className="font-medium text-primary hover:underline">Create one</Link></p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

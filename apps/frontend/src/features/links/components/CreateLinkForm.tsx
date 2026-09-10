@@ -5,8 +5,11 @@ import type { CreateLinkFormData } from '../schemas/createLinkSchema';
 import { createLinkSchema } from '../schemas/createLinkSchema';
 import { useCreateLink } from '../api/useCreateLink';
 import { useGetCollections } from '../../collections/api/useGetCollections';
-import { Settings, CheckCircle2, AlertCircle } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Settings, CheckCircle2, AlertCircle, Link2, Copy, ArrowRight } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Link } from 'react-router-dom';
 
 export function CreateLinkForm() {
   const [showAdvanced, setShowAdvanced] = useState(false);
@@ -18,160 +21,111 @@ export function CreateLinkForm() {
   });
 
   const onSubmit = async (formData: CreateLinkFormData) => {
-    try {
-      const payload = {
-        destinationUrl: formData.destinationUrl,
-        customAlias: formData.customAlias || undefined,
-        password: formData.password || undefined,
-        expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
-        tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : undefined,
-        collectionId: formData.collectionId || undefined,
-      };
-      await mutateAsync(payload);
-    } catch (err) {
-      console.error(err);
-    }
+    const payload = {
+      destinationUrl: formData.destinationUrl,
+      customAlias: formData.customAlias || undefined,
+      password: formData.password || undefined,
+      expiresAt: formData.expiresAt ? new Date(formData.expiresAt).toISOString() : undefined,
+      tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : undefined,
+      collectionId: formData.collectionId || undefined,
+    };
+    await mutateAsync(payload);
   };
 
   if (data?.success) {
     return (
-      <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 max-w-2xl w-full mx-auto text-center">
-        <CheckCircle2 className="w-16 h-16 text-green-500 mx-auto mb-4" />
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">Smart Link Created!</h2>
-        <div className="bg-gray-50 p-4 rounded-lg my-6 flex items-center justify-between border border-gray-200">
-          <span className="text-gray-800 font-mono text-lg">{data.data.shortUrl}</span>
-          <button 
-            onClick={() => navigator.clipboard.writeText(data.data.shortUrl)}
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition"
-          >
-            Copy
-          </button>
-        </div>
-        <button 
-          onClick={() => window.location.reload()}
-          className="text-blue-600 font-medium hover:underline"
-        >
-          Create another link
-        </button>
+      <div className="mx-auto max-w-[560px]">
+        <Card className="text-center p-8">
+          <CheckCircle2 className="mx-auto size-12 text-success mb-4" />
+          <h2 className="text-xl font-semibold">Smart Link Created</h2>
+          <div className="mt-6 flex items-center gap-2 rounded-xl border border-border bg-muted p-3">
+            <span className="flex-1 truncate font-mono text-sm">{data.data.shortUrl}</span>
+            <Button size="sm" onClick={()=> navigator.clipboard.writeText(data.data.shortUrl)}><Copy className="size-4" /> Copy</Button>
+          </div>
+          <div className="mt-6 flex justify-center gap-2">
+            <Link to={`/links/${data.data.alias}`}><Button variant="outline" size="sm">View Link <ArrowRight className="size-4" /></Button></Link>
+            <Button size="sm" onClick={()=> window.location.reload()}>Create Another</Button>
+          </div>
+        </Card>
       </div>
     );
   }
 
   return (
-    <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 max-w-2xl w-full mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Create Smart Link</h1>
-        <p className="text-gray-500 mt-2">Shorten your URL and add powerful routing rules.</p>
+    <div className="mx-auto max-w-[640px] space-y-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">Create Smart Link</h1>
+        <p className="text-sm text-muted-foreground mt-1">Shorten your URL and add powerful routing rules.</p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Destination URL *</label>
-          <input
-            {...register('destinationUrl')}
-            type="url"
-            placeholder="https://example.com/very-long-url..."
-            className={`w-full px-4 py-3 rounded-lg border ${errors.destinationUrl ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 outline-none transition`}
-          />
-          {errors.destinationUrl && <p className="text-red-500 text-sm mt-1">{errors.destinationUrl.message}</p>}
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Link2 className="size-4 text-primary" /> Destination</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6" noValidate>
+            <div>
+              <label className="text-sm font-medium">Destination URL *</label>
+              <Input {...register('destinationUrl')} placeholder="https://example.com/very-long-url..." className="mt-1.5" />
+              {errors.destinationUrl && <p className="text-xs text-destructive mt-1">{errors.destinationUrl.message}</p>}
+            </div>
 
-        <div>
-          <button
-            type="button"
-            onClick={() => setShowAdvanced(!showAdvanced)}
-            className="flex items-center text-gray-600 hover:text-gray-900 transition font-medium"
-          >
-            <Settings className="w-4 h-4 mr-2" />
-            {showAdvanced ? 'Hide Advanced Options' : 'Show Advanced Options'}
-          </button>
-        </div>
-
-        <AnimatePresence>
-          {showAdvanced && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="space-y-5 overflow-hidden"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Custom Alias</label>
-                  <input
-                    {...register('customAlias')}
-                    type="text"
-                    placeholder="my-campaign"
-                    className={`w-full px-4 py-2 rounded-lg border ${errors.customAlias ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 outline-none`}
-                  />
-                  {errors.customAlias && <p className="text-red-500 text-sm mt-1">{errors.customAlias.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Password Protection</label>
-                  <input
-                    {...register('password')}
-                    type="password"
-                    placeholder="Enter password..."
-                    className={`w-full px-4 py-2 rounded-lg border ${errors.password ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 outline-none`}
-                  />
-                  {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Expiration Date</label>
-                  <input
-                    {...register('expiresAt')}
-                    type="datetime-local"
-                    className={`w-full px-4 py-2 rounded-lg border ${errors.expiresAt ? 'border-red-500' : 'border-gray-300'} focus:ring-2 focus:ring-blue-500 outline-none`}
-                  />
-                  {errors.expiresAt && <p className="text-red-500 text-sm mt-1">{errors.expiresAt.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
-                  <input
-                    {...register('tags')}
-                    type="text"
-                    placeholder="marketing, social, q4"
-                    className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Collection</label>
-                <select
-                  {...register('collectionId')}
-                  className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-500 outline-none"
-                >
-                  <option value="">None / Uncategorized</option>
-                  {collectionsData?.data?.map(collection => (
-                    <option key={collection.id} value={collection.id}>
-                      {collection.name}
-                    </option>
-                  ))}
+                <label className="text-sm font-medium">Custom Alias</label>
+                <div className="mt-1.5 flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground hidden sm:block">/ </span>
+                  <Input {...register('customAlias')} placeholder="my-campaign" />
+                </div>
+                {errors.customAlias && <p className="text-xs text-destructive mt-1">{errors.customAlias.message}</p>}
+              </div>
+              <div>
+                <label className="text-sm font-medium">Collection</label>
+                <select {...register('collectionId')} className="mt-1.5 flex h-9 w-full rounded-lg border border-border bg-card px-3 text-sm">
+                  <option value="">None</option>
+                  {collectionsData?.data?.map(c=> <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
 
-        {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-4 flex items-start">
-            <AlertCircle className="w-5 h-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-            <p className="text-red-700 text-sm">{error.message}</p>
-          </div>
-        )}
+            <button type="button" onClick={()=> setShowAdvanced(!showAdvanced)} className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+              <Settings className="size-4" /> {showAdvanced ? "Hide advanced" : "Show advanced"} <span className="text-xs rounded bg-muted px-1.5 py-0.5 border border-border">optional</span>
+            </button>
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {isPending ? 'Forging Link...' : 'Create Smart Link'}
-        </button>
-      </form>
+            {showAdvanced && (
+              <div className="space-y-4 rounded-xl border border-border bg-muted/30 p-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="text-sm font-medium">Password</label>
+                    <Input {...register('password')} type="password" placeholder="Protect link" className="mt-1.5" />
+                    {errors.password && <p className="text-xs text-destructive mt-1">{errors.password.message}</p>}
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Expiration</label>
+                    <Input {...register('expiresAt')} type="datetime-local" className="mt-1.5" />
+                    {errors.expiresAt && <p className="text-xs text-destructive mt-1">{errors.expiresAt.message}</p>}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Tags</label>
+                  <Input {...register('tags')} placeholder="marketing, social, q4" className="mt-1.5" />
+                  <p className="text-xs text-muted-foreground mt-1">Comma separated</p>
+                </div>
+              </div>
+            )}
+
+            {error && (
+              <div className="flex gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="size-4 shrink-0 mt-0.5" /> {(error as any).message}
+              </div>
+            )}
+
+            <Button type="submit" disabled={isPending} className="w-full">
+              {isPending ? "Forging link…" : "Create Smart Link"}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,19 +1,23 @@
 import { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useGetLink } from '../features/links/api/useGetLink';
-import { LinkMetadataCard } from '../features/links/components/LinkMetadataCard';
-import { LinkQuickStats } from '../features/links/components/LinkQuickStats';
-import { QRCodeModal } from '../features/links/components/QRCodeModal';
-import { ArrowLeft, Copy, QrCode, Link2, AlertTriangle, Activity } from 'lucide-react';
+import { ArrowLeft, Copy, QrCode, Link2, Shield, ExternalLink, BarChart3, Settings2, Zap, Split } from 'lucide-react';
 import { FavoriteButton } from '../features/links/components/FavoriteButton';
 import { RulesManager } from '../features/links/components/RulesManager';
 import { TrafficManager } from '../features/links/components/TrafficManager';
+import { QRCodeModal } from '../features/links/components/QRCodeModal';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Skeleton } from '@/components/ui/skeleton';
+import { format } from 'date-fns';
 
 export default function LinkDetailsPage() {
   const { alias } = useParams<{ alias: string }>();
-  const navigate = useNavigate();
   const [isQRModalOpen, setQRModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [tab, setTab] = useState("overview");
 
   const { data, isLoading, isError, error } = useGetLink(alias || '');
 
@@ -21,39 +25,19 @@ export default function LinkDetailsPage() {
     if (data?.data.shortUrl) {
       navigator.clipboard.writeText(data.data.shortUrl);
       setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => setCopied(false), 1800);
     }
   };
 
   if (isLoading) {
-    return (
-      <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/4 mb-8"></div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 h-96 bg-gray-200 rounded-xl"></div>
-          <div className="h-64 bg-gray-200 rounded-xl"></div>
-        </div>
-      </div>
-    );
+    return <div className="space-y-4"><Skeleton className="h-10 w-1/3" /><Skeleton className="h-64 w-full" /></div>;
   }
 
   if (isError || !data?.data) {
     return (
-      <div className="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-center">
-        <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-          <AlertTriangle className="w-10 h-10 text-red-500" />
-        </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Link Not Found</h2>
-        <p className="text-gray-500 mb-8 max-w-md mx-auto">
-          {error?.message || "The smart link you're looking for doesn't exist or you don't have permission to view it."}
-        </p>
-        <button 
-          onClick={() => navigate('/')}
-          className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Back to Dashboard
-        </button>
+      <div className="flex flex-col items-center justify-center py-20 text-center">
+        <p className="text-sm text-muted-foreground mb-4">{(error as any)?.message || "Link not found"}</p>
+        <Link to="/"><Button>Back to Dashboard</Button></Link>
       </div>
     );
   }
@@ -61,94 +45,112 @@ export default function LinkDetailsPage() {
   const link = data.data;
 
   return (
-    <div className="py-8 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      {/* Navigation */}
-      <div className="mb-6">
-        <Link to="/" className="inline-flex items-center text-sm font-medium text-gray-500 hover:text-gray-700 transition">
-          <ArrowLeft className="w-4 h-4 mr-1" />
-          Back to Dashboard
-        </Link>
-      </div>
+    <div className="space-y-6">
+      <Link to="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="size-4" /> Back
+      </Link>
 
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-4">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-3xl font-bold text-gray-900 break-all flex items-center">
-              {link.alias}
-              <div className="ml-2 mt-1">
-                <FavoriteButton link={link} />
-              </div>
-            </h1>
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium shrink-0 ${
-              link.status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
-              link.status === 'EXPIRED' ? 'bg-red-100 text-red-800' : 
-              'bg-gray-100 text-gray-800'
-            }`}>
-              {link.status}
-            </span>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="min-w-0">
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl font-bold tracking-tight truncate">/{link.alias}</h1>
+            <FavoriteButton link={link} />
+            <Badge variant={link.status==="ACTIVE"?"success":"secondary"}>{link.status.toLowerCase()}</Badge>
           </div>
-          <div className="flex items-center text-blue-600 font-medium">
-            <Link2 className="w-4 h-4 mr-1.5" />
-            {link.shortUrl}
+          <div className="mt-2 flex items-center gap-2 text-sm">
+            <Link2 className="size-4 text-muted-foreground" />
+            <a href={link.shortUrl} target="_blank" rel="noreferrer" className="font-mono text-primary hover:underline truncate">{link.shortUrl}</a>
+            <Button variant="ghost" size="icon-xs" onClick={handleCopy}>{copied ? "✓" : <Copy className="size-3.5" />}</Button>
           </div>
         </div>
-        
-        <div className="flex items-center gap-3 shrink-0">
-          <Link 
-            to={`/links/${alias}/analytics`}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-900 shadow-sm text-sm font-medium rounded-lg text-blue-700 bg-blue-50 hover:bg-blue-100 transition"
-          >
-            <Activity className="w-4 h-4 mr-2" />
-            Analytics
-          </Link>
-
-          <button 
-            onClick={() => setQRModalOpen(true)}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-gray-900 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 transition"
-          >
-            <QrCode className="w-4 h-4 mr-2 text-gray-500" />
-            QR Code
-          </button>
-          
-          <button 
-            onClick={handleCopy}
-            className="relative inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg shadow-sm text-white bg-blue-600 hover:bg-blue-700 transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-          >
-            {copied ? (
-              <span className="flex items-center">Copied!</span>
-            ) : (
-              <span className="flex items-center">
-                <Copy className="w-4 h-4 mr-2" />
-                Copy URL
-              </span>
-            )}
-          </button>
+        <div className="flex gap-2">
+          <Link to={`/links/${alias}/analytics`}><Button variant="outline" size="sm"><BarChart3 className="size-4" /> Analytics</Button></Link>
+          <Button variant="outline" size="sm" onClick={()=> setQRModalOpen(true)}><QrCode className="size-4" /> QR</Button>
+          <Button size="sm" onClick={handleCopy}><Copy className="size-4" /> {copied?"Copied":"Copy URL"}</Button>
         </div>
       </div>
 
-      {/* Grid Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2">
-          <LinkMetadataCard link={link} />
-        </div>
-        <div>
-          <LinkQuickStats clicks={link.clicks} />
-        </div>
-      </div>
-      
-      {/* Traffic Distribution Engine */}
-      <TrafficManager linkId={link.id} initialVariants={link.trafficVariants} />
-      
-      {/* Smart Redirect Rules */}
-      <RulesManager linkId={link.id} />
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsTrigger value="rules">Smart Rules</TabsTrigger>
+          <TabsTrigger value="traffic">Traffic Routing</TabsTrigger>
+          <TabsTrigger value="settings">Settings</TabsTrigger>
+        </TabsList>
 
-      <QRCodeModal 
-        isOpen={isQRModalOpen}
-        onClose={() => setQRModalOpen(false)}
-        url={link.shortUrl}
-        alias={link.alias}
-      />
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <Card className="p-4"><p className="text-[11px] uppercase tracking-widest text-muted-foreground">Total Clicks</p><p className="text-2xl font-semibold mt-1">{(link as any).clicks ?? 0}</p></Card>
+            <Card className="p-4"><p className="text-[11px] uppercase tracking-widest text-muted-foreground">Status</p><p className="text-sm font-medium mt-1 capitalize">{link.status.toLowerCase()}</p></Card>
+            <Card className="p-4"><p className="text-[11px] uppercase tracking-widest text-muted-foreground">Created</p><p className="text-sm font-medium mt-1">{format(new Date(link.createdAt), 'MMM d, yyyy')}</p></Card>
+            <Card className="p-4"><p className="text-[11px] uppercase tracking-widest text-muted-foreground">Security</p><p className="text-sm font-medium mt-1 flex items-center gap-1">{link.hasPassword ? <><Shield className="size-3" /> Protected</> : "Public"}</p></Card>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <Card className="lg:col-span-2">
+              <CardHeader><CardTitle>Destination & Configuration</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground flex items-center gap-1"><ExternalLink className="size-3" /> Destination URL</p>
+                  <a href={link.destinationUrl} target="_blank" rel="noreferrer" className="mt-1 block break-all text-sm hover:text-primary">{link.destinationUrl}</a>
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div><p className="text-xs text-muted-foreground">Expires</p><p className="font-medium">{link.expiresAt ? format(new Date(link.expiresAt), 'PPp') : "Never"}</p></div>
+                  <div><p className="text-xs text-muted-foreground">Tags</p><div className="flex flex-wrap gap-1 mt-1">{link.tags.length ? link.tags.map(t=> <span key={t} className="rounded-md border border-border bg-muted px-1.5 py-0.5 text-xs">{t}</span>) : <span className="text-muted-foreground text-xs">None</span>}</div></div>
+                </div>
+                <div className="flex gap-1.5 flex-wrap">
+                  {link.hasPassword && <Badge variant="warning">Password</Badge>}
+                  {link.expiresAt && <Badge variant="secondary">Expiring</Badge>}
+                  {link.trafficVariants?.length ? <Badge variant="default">A/B routing</Badge> : null}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader><CardTitle>Quick Actions</CardTitle></CardHeader>
+              <CardContent className="space-y-2">
+                <Button variant="outline" className="w-full justify-start" onClick={handleCopy}><Copy className="size-4" /> Copy short link</Button>
+                <Button variant="outline" className="w-full justify-start" onClick={()=> setTab("rules")}><Zap className="size-4" /> Add smart rule</Button>
+                <Button variant="outline" className="w-full justify-start" onClick={()=> setTab("traffic")}><Split className="size-4" /> Configure routing</Button>
+                <Link to={`/links/${alias}/analytics`} className="block"><Button variant="outline" className="w-full justify-start"><BarChart3 className="size-4" /> View analytics</Button></Link>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Also show traffic/rules inline in overview for premium feel */}
+          <TrafficManager linkId={link.id} initialVariants={link.trafficVariants} />
+          <RulesManager linkId={link.id} />
+        </TabsContent>
+
+        <TabsContent value="analytics">
+          <Card className="p-8 text-center">
+            <BarChart3 className="size-8 mx-auto text-muted-foreground mb-3" />
+            <p className="text-sm font-medium">Detailed analytics</p>
+            <p className="text-xs text-muted-foreground mt-1">Open full analytics page for in-depth insights.</p>
+            <Link to={`/links/${alias}/analytics`} className="inline-block mt-4"><Button size="sm">Open Analytics</Button></Link>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="rules">
+          <RulesManager linkId={link.id} />
+        </TabsContent>
+
+        <TabsContent value="traffic">
+          <TrafficManager linkId={link.id} initialVariants={link.trafficVariants} />
+        </TabsContent>
+
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Settings2 className="size-4" /> Link Settings</CardTitle></CardHeader>
+            <CardContent className="text-sm text-muted-foreground">
+              Edit destination, password, expiration and collection from the link management menu. Dangerous actions (archive/delete) are available in the dashboard table.
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      <QRCodeModal isOpen={isQRModalOpen} onClose={()=> setQRModalOpen(false)} url={link.shortUrl} alias={link.alias} />
     </div>
   );
 }

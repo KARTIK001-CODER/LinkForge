@@ -1,32 +1,22 @@
 import { MousePointerClick } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-interface LinkQuickStatsProps {
-  clicks: number;
-}
-
-export function LinkQuickStats({ clicks }: LinkQuickStatsProps) {
+export function LinkQuickStats({ clicks }: { clicks: number }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      <div className="px-6 py-5 border-b border-gray-100 bg-gray-50/50">
-        <h3 className="text-lg font-semibold text-gray-900">Quick Stats</h3>
-      </div>
-      <div className="p-6">
-        <div className="flex items-center">
-          <div className="p-3 rounded-xl bg-blue-50 text-blue-600 mr-4">
-            <MousePointerClick className="w-6 h-6" />
-          </div>
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/30 border-b border-border"><CardTitle>Quick Stats</CardTitle></CardHeader>
+      <CardContent className="pt-6">
+        <div className="flex items-center gap-4">
+          <div className="p-3 rounded-xl bg-primary text-primary-foreground"><MousePointerClick className="size-6" /></div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Lifetime Clicks</p>
-            <p className="text-3xl font-bold text-gray-900">{clicks.toLocaleString()}</p>
+            <p className="text-sm text-muted-foreground">Lifetime Clicks</p>
+            <p className="text-3xl font-bold tracking-tight">{clicks.toLocaleString()}</p>
           </div>
         </div>
-        
-        <div className="mt-6 pt-6 border-t border-gray-100">
-          <p className="text-xs text-gray-500 text-center">
-            Detailed timeseries analytics will be available in a future update.
-          </p>
+        <div className="mt-6 pt-6 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">Detailed timeseries analytics will be available in a future update.</p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 }
