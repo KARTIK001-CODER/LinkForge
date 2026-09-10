@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { LinkIcon, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
+import { Link2, Eye, EyeOff, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../features/auth/api/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -13,118 +16,47 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  const passwordChecks = {
-    length: password.length >= 8,
-    upper: /[A-Z]/.test(password),
-    lower: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
+  const checks = { length: password.length>=8, upper:/[A-Z]/.test(password), lower:/[a-z]/.test(password), number:/[0-9]/.test(password) };
+  const allPass = Object.values(checks).every(Boolean);
+
+  const handleSubmit= async (e:React.FormEvent)=> {
+    e.preventDefault(); if(!allPass) return; setError(''); setIsLoading(true);
+    try { await register({ email, username, password, displayName: displayName || undefined }); }
+    catch(err:any){ setError(err?.response?.data?.error?.message || 'Registration failed'); }
+    finally{ setIsLoading(false); }
   };
 
-  const allChecksPass = Object.values(passwordChecks).every(Boolean);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!allChecksPass) return;
-    setError('');
-    setIsLoading(true);
-    try {
-      await register({ email, username, password, displayName: displayName || undefined });
-    } catch (err: any) {
-      const msg = err?.response?.data?.error?.message || err?.response?.data?.error?.[0]?.message || 'Registration failed';
-      setError(msg);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const CheckItem = ({ pass, label }: { pass: boolean; label: string }) => (
-    <div className={`flex items-center gap-1.5 text-xs ${pass ? 'text-green-600' : 'text-gray-400'}`}>
-      {pass ? <CheckCircle className="w-3 h-3" /> : <div className="w-3 h-3 rounded-full border border-gray-300 bg-white text-gray-900" />}
-      {label}
-    </div>
-  );
+  const Check=({pass,label}:{pass:boolean; label:string})=>(<span className={`inline-flex items-center gap-1 text-xs ${pass? "text-success":"text-muted-foreground"}`}>{pass? <CheckCircle className="size-3"/>:<span className="size-3 rounded-full border border-border inline-block"/>}{label}</span>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <Link to="/" className="flex items-center justify-center mb-6">
-          <div className="w-12 h-12 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
-            <LinkIcon className="w-7 h-7 text-white" />
-          </div>
-          <span className="ml-3 text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-600">
-            LinkForge
-          </span>
-        </Link>
-        <h2 className="text-center text-3xl font-bold text-gray-900">Create your account</h2>
-        <p className="mt-2 text-center text-sm text-gray-600">
-          Start forging smart links in minutes
-        </p>
-      </div>
-
-      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow-xl shadow-gray-200/50 sm:rounded-2xl sm:px-10 border border-gray-100">
-          {error && (
-            <div className="mb-4 flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input id="email" type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition"
-                placeholder="you@example.com" />
-            </div>
-
-            <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">Username</label>
-              <input id="username" type="text" required value={username} onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition"
-                placeholder="your-username" minLength={3} maxLength={50} />
-            </div>
-
-            <div>
-              <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-1">Display name (optional)</label>
-              <input id="displayName" type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition"
-                placeholder="Your Name" />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-              <div className="relative">
-                <input id="password" type={showPassword ? 'text' : 'password'} required value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full px-4 py-2.5 pr-10 rounded-lg border border-gray-300 bg-white text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition"
-                  placeholder="Create a strong password" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-3">
-                <CheckItem pass={passwordChecks.length} label="8+ characters" />
-                <CheckItem pass={passwordChecks.upper} label="Uppercase" />
-                <CheckItem pass={passwordChecks.lower} label="Lowercase" />
-                <CheckItem pass={passwordChecks.number} label="Number" />
-              </div>
-            </div>
-
-            <button type="submit" disabled={isLoading || !allChecksPass}
-              className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition">
-              {isLoading ? (
-                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
-              ) : 'Create account'}
-            </button>
-          </form>
-
-          <p className="mt-6 text-center text-sm text-gray-600">
-            Already have an account?{' '}
-            <Link to="/login" className="font-medium text-blue-600 hover:text-blue-500">Sign in</Link>
-          </p>
+    <div className="min-h-screen bg-background flex">
+      <div className="hidden lg:flex w-[46%] flex-col justify-between border-r border-border bg-card p-10">
+        <Link to="/" className="flex items-center gap-2"><div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground"><Link2 className="size-4" /></div><span className="text-sm font-semibold">LinkForge</span></Link>
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Create your workspace</h1>
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground">Start forging smart links in minutes. Analytics, routing, and collaboration included.</p>
         </div>
+        <p className="text-xs text-muted-foreground">© 2026 LinkForge</p>
+      </div>
+      <div className="flex flex-1 items-center justify-center p-6">
+        <Card className="w-full max-w-[440px]">
+          <CardHeader><CardTitle>Create account</CardTitle><CardDescription>Start forging smart links</CardDescription></CardHeader>
+          <CardContent>
+            {error && <div className="mb-4 flex gap-2 rounded-lg border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive"><AlertCircle className="size-4 shrink-0"/>{error}</div>}
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div><label className="text-sm font-medium">Email</label><Input type="email" required value={email} onChange={e=> setEmail(e.target.value)} placeholder="you@example.com" className="mt-1.5" /></div>
+              <div><label className="text-sm font-medium">Username</label><Input required value={username} onChange={e=> setUsername(e.target.value)} placeholder="your-username" className="mt-1.5" /></div>
+              <div><label className="text-sm font-medium">Display name <span className="text-muted-foreground font-normal">(optional)</span></label><Input value={displayName} onChange={e=> setDisplayName(e.target.value)} placeholder="Your Name" className="mt-1.5" /></div>
+              <div>
+                <label className="text-sm font-medium">Password</label>
+                <div className="relative mt-1.5"><Input type={showPassword?"text":"password"} required value={password} onChange={e=> setPassword(e.target.value)} placeholder="Create a strong password" className="pr-10" /><button type="button" onClick={()=> setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-muted-foreground">{showPassword? <EyeOff className="size-4"/>:<Eye className="size-4"/>}</button></div>
+                <div className="mt-2 flex flex-wrap gap-2"><Check pass={checks.length} label="8+ chars" /><Check pass={checks.upper} label="Upper" /><Check pass={checks.lower} label="Lower" /><Check pass={checks.number} label="Number" /></div>
+              </div>
+              <Button type="submit" disabled={isLoading || !allPass} className="w-full">{isLoading? "...":"Create account"}</Button>
+            </form>
+            <p className="mt-6 text-center text-sm text-muted-foreground">Already have an account? <Link to="/login" className="text-primary hover:underline font-medium">Sign in</Link></p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

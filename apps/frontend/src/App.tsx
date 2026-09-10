@@ -1,10 +1,11 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './features/auth/api/auth';
 import { AuthGuard, GuestGuard } from './features/auth/components/AuthGuard';
 import Layout from './components/Layout';
 import CreateLinkPage from './pages/CreateLinkPage';
 import DashboardPage from './pages/DashboardPage';
+import LinksPage from './pages/LinksPage';
 import LinkDetailsPage from './pages/LinkDetailsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import CollectionsPage from './pages/CollectionsPage';
@@ -15,6 +16,9 @@ import ResetPasswordPage from './pages/ResetPasswordPage';
 import VerifyEmailPage from './pages/VerifyEmailPage';
 import ProfilePage from './pages/ProfilePage';
 import SecurityPage from './pages/SecurityPage';
+import SettingsPage from './pages/SettingsPage';
+import ActivityPage from './pages/ActivityPage';
+import DeveloperPage from './pages/DeveloperPage';
 import NotFoundPage from './pages/errors/NotFoundPage';
 import InactivePage from './pages/errors/InactivePage';
 import ExpiredPage from './pages/errors/ExpiredPage';
@@ -46,12 +50,27 @@ function App() {
 
             <Route path="/" element={<AuthGuard><Layout /></AuthGuard>}>
               <Route index element={<DashboardPage />} />
+              <Route path="links" element={<LinksPage />} />
+              <Route path="dashboard" element={<Navigate to="/" replace />} />
               <Route path="collections" element={<CollectionsPage />} />
               <Route path="create" element={<CreateLinkPage />} />
               <Route path="links/:alias" element={<LinkDetailsPage />} />
               <Route path="links/:alias/analytics" element={<AnalyticsPage />} />
+              <Route path="analytics" element={<AnalyticsPage />} />
+              <Route path="activity" element={<ActivityPage />} />
+              <Route path="routing/rules" element={<DeveloperPage />} />
+              <Route path="routing/traffic" element={<DeveloperPage />} />
+              <Route path="developer" element={<DeveloperPage />} />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="settings" element={<SettingsPage />}>
+                <Route index element={<Navigate to="profile" replace />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="security" element={<SecurityPage />} />
+                <Route path="preferences" element={<div className="text-sm text-muted-foreground">Preferences coming soon.</div>} />
+                <Route path="developer" element={<DeveloperPage />} />
+              </Route>
+              <Route path="settings/profile" element={<ProfilePage />} />
             </Route>
 
             <Route path="/error/not-found" element={<NotFoundPage />} />
@@ -59,6 +78,7 @@ function App() {
             <Route path="/error/expired" element={<ExpiredPage />} />
             <Route path="/error/500" element={<ServerErrorPage />} />
             <Route path="/protected/:alias" element={<ProtectedPage />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </AuthProvider>
       </BrowserRouter>
